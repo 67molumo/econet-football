@@ -14,14 +14,14 @@ import {
 } from 'lucide-react'
 import supabase from '../../lib/supabase'
 
-const Sidebar = ({ onClose, isAdmin, session }) => {
+const Sidebar = ({ onClose, isAdmin, session, role }) => {
   const navItems = [
-    { path: '/', icon: LayoutDashboard, label: 'Dashboard', public: true },
-    { path: '/matches', icon: Trophy, label: 'Matches', public: true },
-    { path: '/players', icon: Users, label: 'Players', public: true },
-    { path: '/statistics', icon: BarChart3, label: 'Statistics', public: true },
-    { path: '/reports', icon: FileText, label: 'Reports', public: true },
-    { path: '/settings', icon: Settings, label: 'Settings', public: false, admin: true },
+    { path: '/', icon: LayoutDashboard, label: 'Dashboard', roles: ['admin', 'manager', 'viewer'] },
+    { path: '/matches', icon: Trophy, label: 'Matches', roles: ['admin', 'manager', 'viewer'] },
+    { path: '/players', icon: Users, label: 'Players', roles: ['admin', 'manager', 'viewer'] },
+    { path: '/statistics', icon: BarChart3, label: 'Statistics', roles: ['admin', 'manager', 'viewer'] },
+    { path: '/reports', icon: FileText, label: 'Reports', roles: ['admin', 'manager', 'viewer'] },
+    { path: '/settings', icon: Settings, label: 'Settings', roles: ['admin'] },
   ]
 
   const handleLogout = async () => {
@@ -33,7 +33,12 @@ const Sidebar = ({ onClose, isAdmin, session }) => {
     window.location.href = '/login'
   }
 
-  // Get user initials for avatar
+  // Check if user has access to this item
+  const hasAccess = (item) => {
+    return item.roles.includes(role) || (item.roles.includes('admin') && isAdmin)
+  }
+
+  // Get user initials
   const getUserInitials = () => {
     if (session?.user?.email) {
       return session.user.email.charAt(0).toUpperCase()
@@ -44,12 +49,21 @@ const Sidebar = ({ onClose, isAdmin, session }) => {
   // Get user display name
   const getUserName = () => {
     if (isAdmin) return 'Admin'
+    if (role === 'manager') return 'Manager'
     if (session?.user?.email) {
-      // Extract name from email or use first part
       const name = session.user.email.split('@')[0]
       return name.charAt(0).toUpperCase() + name.slice(1)
     }
     return 'User'
+  }
+
+  // Get role badge color
+  const getRoleBadgeColor = () => {
+    switch(role) {
+      case 'admin': return 'bg-green-600/30 text-green-300'
+      case 'manager': return 'bg-blue-600/30 text-blue-300'
+      default: return 'bg-gray-600/30 text-gray-300'
+    }
   }
 
   return (
@@ -74,8 +88,7 @@ const Sidebar = ({ onClose, isAdmin, session }) => {
       {/* Navigation */}
       <nav className="flex-1 p-2 sm:p-3 space-y-0.5 overflow-y-auto">
         {navItems.map((item) => {
-          // Skip admin-only items for non-admin users
-          if (item.admin && !isAdmin) return null
+          if (!hasAccess(item)) return null
           
           return (
             <NavLink
@@ -92,7 +105,7 @@ const Sidebar = ({ onClose, isAdmin, session }) => {
             >
               <item.icon className="w-4 h-4 sm:w-5 sm:h-5" />
               <span className="font-medium">{item.label}</span>
-              {item.admin && isAdmin && (
+              {item.roles.includes('admin') && isAdmin && (
                 <span className="ml-auto text-[8px] sm:text-[9px] px-1.5 py-0.5 bg-green-600/30 text-green-300 rounded-full">
                   Admin
                 </span>
@@ -113,11 +126,9 @@ const Sidebar = ({ onClose, isAdmin, session }) => {
               <div className="flex-1 min-w-0">
                 <p className="text-[11px] sm:text-sm font-medium truncate">
                   {getUserName()}
-                  {isAdmin && (
-                    <span className="ml-1.5 text-[8px] sm:text-[9px] px-1.5 py-0.5 bg-green-600/30 text-green-300 rounded-full">
-                      Admin
-                    </span>
-                  )}
+                  <span className={`ml-1.5 text-[8px] sm:text-[9px] px-1.5 py-0.5 rounded-full ${getRoleBadgeColor()}`}>
+                    {role.toUpperCase()}
+                  </span>
                 </p>
                 <p className="text-[9px] sm:text-xs text-gray-400 truncate hidden sm:block">
                   {session.user.email}
@@ -142,7 +153,6 @@ const Sidebar = ({ onClose, isAdmin, session }) => {
           </button>
         )}
         
-        {/* Public user indicator */}
         {!session && (
           <p className="text-[8px] sm:text-[9px] text-gray-500 text-center">
             Public View • Read Only

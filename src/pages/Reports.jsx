@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useOutletContext } from 'react-router-dom'
 import { FileText, Download, Calendar, Users, Trophy, BarChart, Printer, ChevronDown, Lock } from 'lucide-react'
 import { useMatches } from '../hooks/useMatches'
 import { usePlayers } from '../hooks/usePlayers'
@@ -7,13 +8,20 @@ import Select from '../components/common/Select'
 import Loading from '../components/common/Loading'
 import { formatDate } from '../utils/helpers'
 
-const Reports = ({ isAdmin }) => {
+const Reports = () => {
+  // Get isAdmin and role from outlet context
+  const { isAdmin, role } = useOutletContext()
+  console.log('📊 Reports - isAdmin:', isAdmin, 'role:', role)
+
   const { matches, loading: matchesLoading, getTeamStats } = useMatches()
   const { players, loading: playersLoading } = usePlayers()
   const [teamStats, setTeamStats] = useState(null)
   const [reportType, setReportType] = useState('season')
   const [generating, setGenerating] = useState(false)
   const [generatedReports, setGeneratedReports] = useState([])
+
+  // Check if user can generate reports (admin or manager)
+  const canGenerate = isAdmin || role === 'manager'
 
   useEffect(() => {
     if (matches.length > 0) {
@@ -31,7 +39,7 @@ const Reports = ({ isAdmin }) => {
   }
 
   const generateReport = async () => {
-    if (!isAdmin) return
+    if (!canGenerate) return
     setGenerating(true)
     try {
       // Simulate report generation
@@ -114,20 +122,39 @@ Summary:
           <div>
             <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">Reports</h1>
             <p className="text-xs sm:text-sm text-gray-500">
-              {isAdmin ? 'Generate and view detailed reports' : 'View detailed reports'}
+              {canGenerate ? 'Generate and view detailed reports' : 'View detailed reports'}
             </p>
           </div>
-          {!isAdmin && (
-            <div className="hidden sm:flex items-center gap-1.5 text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full">
-              <Lock className="w-3 h-3" />
-              <span>View Only</span>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {/* View Only Badge */}
+            {!canGenerate && (
+              <div className="hidden sm:flex items-center gap-1.5 text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full">
+                <Lock className="w-3 h-3" />
+                <span>View Only</span>
+              </div>
+            )}
+            
+            {/* Manager Badge */}
+            {role === 'manager' && (
+              <div className="hidden sm:flex items-center gap-1.5 text-xs text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full">
+                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                <span>Manager</span>
+              </div>
+            )}
+            
+            {/* Admin Badge */}
+            {isAdmin && (
+              <div className="hidden sm:flex items-center gap-1.5 text-xs text-green-600 bg-green-50 px-3 py-1.5 rounded-full">
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                <span>Admin</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Generate Report Section - Admin Only */}
-      {isAdmin && (
+      {/* Generate Report Section - Admin or Manager Only */}
+      {canGenerate && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-4 sm:mb-6">
           <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-3 sm:mb-4">Generate New Report</h3>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-end">
@@ -155,12 +182,13 @@ Summary:
         </div>
       )}
 
-      {/* Public message when not logged in */}
-      {!isAdmin && (
+      {/* Public message when user can't generate */}
+      {!canGenerate && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
           <p className="text-xs sm:text-sm text-blue-700">
-            <span className="font-medium">🔍 Public View:</span> You can view all reports. 
-            Sign in as admin to generate new reports.
+            <span className="font-medium">🔍 View Only Mode:</span> You can view all reports. 
+            {!isAdmin && role !== 'manager' && ' Sign in as admin or manager to generate new reports.'}
+            {role === 'viewer' && ' Contact an admin for report generation access.'}
           </p>
         </div>
       )}
@@ -229,9 +257,9 @@ Summary:
           <FileText className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1 sm:mb-2">No Reports Generated</h3>
           <p className="text-xs sm:text-sm text-gray-500">
-            {isAdmin 
+            {canGenerate 
               ? 'Generate your first report using the form above' 
-              : 'Reports will appear here once generated by an admin'}
+              : 'Reports will appear here once generated by an admin or manager'}
           </p>
         </div>
       )}

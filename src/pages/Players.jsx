@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useOutletContext } from 'react-router-dom'
 import { Plus, Search, User, Award, Calendar, Shield, Lock } from 'lucide-react'
 import { usePlayers } from '../hooks/usePlayers'
 import { useMatches } from '../hooks/useMatches'
@@ -10,8 +11,11 @@ import Modal from '../components/common/Modal'
 import PlayerForm from '../components/Players/PlayerForm'
 import PlayerProfile from '../components/Players/PlayerProfile'
 
-const Players = ({ isAdmin }) => {
-    console.log('👤 Players received isAdmin:', isAdmin)
+const Players = () => {
+  // Get isAdmin and role from outlet context
+  const { isAdmin, role } = useOutletContext()
+  console.log('👤 Players - isAdmin:', isAdmin, 'role:', role)
+
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedPlayer, setSelectedPlayer] = useState(null)
   const [showProfileModal, setShowProfileModal] = useState(false)
@@ -21,6 +25,9 @@ const Players = ({ isAdmin }) => {
 
   const { players, loading, deletePlayer, refreshPlayers } = usePlayers()
   const { getMatchById } = useMatches()
+
+  // Check if user can edit (admin or manager)
+  const canEdit = isAdmin || role === 'manager'
 
   useEffect(() => {
     loadPlayerStats()
@@ -54,13 +61,13 @@ const Players = ({ isAdmin }) => {
   }
 
   const handleEditPlayer = (player) => {
-    if (!isAdmin) return
+    if (!canEdit) return
     setEditingPlayer(player)
     setShowFormModal(true)
   }
 
   const handleDeletePlayer = async (id) => {
-    if (!isAdmin) return
+    if (!canEdit) return
     if (window.confirm('Are you sure you want to delete this player?')) {
       try {
         await deletePlayer(id)
@@ -102,20 +109,36 @@ const Players = ({ isAdmin }) => {
         <div>
           <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">Players</h1>
           <p className="text-xs sm:text-sm text-gray-500">
-            {isAdmin ? 'Manage player profiles and statistics' : 'View player profiles and statistics'}
+            {canEdit ? 'Manage player profiles and statistics' : 'View player profiles and statistics'}
           </p>
         </div>
         <div className="flex items-center gap-2">
           {/* View Only Badge for Public Users */}
-          {!isAdmin && (
+          {!canEdit && (
             <div className="flex items-center gap-1.5 text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full">
               <Lock className="w-3 h-3" />
               <span className="hidden sm:inline">View Only</span>
             </div>
           )}
           
-          {/* Add Player - Admin Only */}
+          {/* Role Badge for Managers */}
+          {role === 'manager' && (
+            <div className="flex items-center gap-1.5 text-xs text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full">
+              <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+              <span className="hidden sm:inline">Manager</span>
+            </div>
+          )}
+          
+          {/* Admin Badge */}
           {isAdmin && (
+            <div className="flex items-center gap-1.5 text-xs text-green-600 bg-green-50 px-3 py-1.5 rounded-full">
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+              <span className="hidden sm:inline">Admin</span>
+            </div>
+          )}
+          
+          {/* Add Player - Admin or Manager Only */}
+          {canEdit && (
             <Button 
               className="flex items-center gap-2 text-sm sm:text-base px-3 sm:px-4 py-1.5 sm:py-2"
               onClick={() => {
@@ -151,7 +174,7 @@ const Players = ({ isAdmin }) => {
           title="No players found"
           description={searchTerm ? "Try adjusting your search" : "Start by adding your first player"}
           action={
-            !searchTerm && isAdmin ? (
+            !searchTerm && canEdit ? (
               <Button onClick={() => {
                 setEditingPlayer(null)
                 setShowFormModal(true)
@@ -206,7 +229,7 @@ const Players = ({ isAdmin }) => {
                   >
                     View Profile
                   </button>
-                  {isAdmin && (
+                  {canEdit && (
                     <>
                       <button
                         onClick={() => handleEditPlayer(player)}
@@ -244,8 +267,8 @@ const Players = ({ isAdmin }) => {
         )}
       </Modal>
 
-      {/* Player Form Modal - Admin Only */}
-      {isAdmin && (
+      {/* Player Form Modal - Admin or Manager Only */}
+      {canEdit && (
         <Modal
           isOpen={showFormModal}
           onClose={() => {

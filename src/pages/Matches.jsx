@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
+import { useOutletContext } from 'react-router-dom'
 import { Plus, Search, Filter, Eye, Edit, Trash2, Calendar, MapPin, Trophy, ChevronDown, ChevronUp, Download, Lock } from 'lucide-react'
 import { useMatches } from '../hooks/useMatches'
 import { useCompetitions } from '../hooks/useCompetitions'
@@ -13,8 +14,11 @@ import MatchForm from '../components/Matches/MatchForm'
 import MatchDetails from '../components/Matches/MatchDetails'
 import { formatDate, getResultColor, getStatusColor } from '../utils/helpers'
 
-const Matches = ({ isAdmin }) => {
-    console.log('⚽ Matches received isAdmin:', isAdmin)
+const Matches = () => {
+  // Get isAdmin and role from outlet context
+  const { isAdmin, role } = useOutletContext()
+  console.log('⚽ Matches - isAdmin:', isAdmin, 'role:', role)
+  
   const [filters, setFilters] = useState({
     search: '',
     status: '',
@@ -32,6 +36,9 @@ const Matches = ({ isAdmin }) => {
   const { matches, loading, deleteMatch, refreshMatches } = useMatches(filters)
   const { competitions, loading: compsLoading } = useCompetitions()
   const { venues, loading: venuesLoading } = useVenues()
+
+  // Check if user can edit (admin or manager)
+  const canEdit = isAdmin || role === 'manager'
 
   // Smart sorting
   const sortedMatches = useMemo(() => {
@@ -81,13 +88,13 @@ const Matches = ({ isAdmin }) => {
   }
 
   const handleEditMatch = (match) => {
-    if (!isAdmin) return
+    if (!canEdit) return
     setEditingMatch(match)
     setShowFormModal(true)
   }
 
   const handleDeleteMatch = async (id) => {
-    if (!isAdmin) return
+    if (!canEdit) return
     if (window.confirm('Are you sure you want to delete this match?')) {
       try {
         await deleteMatch(id)
@@ -151,15 +158,31 @@ const Matches = ({ isAdmin }) => {
         <div>
           <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">Matches</h1>
           <p className="text-xs sm:text-sm text-gray-500">
-            {isAdmin ? 'Manage all match fixtures and results' : 'View all match fixtures and results'}
+            {canEdit ? 'Manage all match fixtures and results' : 'View all match fixtures and results'}
           </p>
         </div>
         <div className="flex items-center gap-2">
           {/* View Only Badge for Public Users */}
-          {!isAdmin && (
+          {!canEdit && (
             <div className="flex items-center gap-1.5 text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full">
               <Lock className="w-3 h-3" />
               <span className="hidden sm:inline">View Only</span>
+            </div>
+          )}
+          
+          {/* Role Badge for Managers */}
+          {role === 'manager' && (
+            <div className="flex items-center gap-1.5 text-xs text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full">
+              <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+              <span className="hidden sm:inline">Manager</span>
+            </div>
+          )}
+          
+          {/* Admin Badge */}
+          {isAdmin && (
+            <div className="flex items-center gap-1.5 text-xs text-green-600 bg-green-50 px-3 py-1.5 rounded-full">
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+              <span className="hidden sm:inline">Admin</span>
             </div>
           )}
           
@@ -174,8 +197,8 @@ const Matches = ({ isAdmin }) => {
             <span className="hidden sm:inline">Export</span>
           </Button>
           
-          {/* Add Match - Admin Only */}
-          {isAdmin && (
+          {/* Add Match - Admin or Manager Only */}
+          {canEdit && (
             <Button 
               className="flex items-center gap-2 text-sm sm:text-base px-3 sm:px-4 py-1.5 sm:py-2"
               onClick={() => {
@@ -247,7 +270,7 @@ const Matches = ({ isAdmin }) => {
           title="No matches found"
           description="Try adjusting your filters or add a new match"
           action={
-            isAdmin ? (
+            canEdit ? (
               <Button onClick={() => {
                 setEditingMatch(null)
                 setShowFormModal(true)
@@ -353,7 +376,7 @@ const Matches = ({ isAdmin }) => {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        {isAdmin && (
+                        {canEdit && (
                           <>
                             <button
                               onClick={() => handleEditMatch(match)}
@@ -434,7 +457,7 @@ const Matches = ({ isAdmin }) => {
                   >
                     Details
                   </button>
-                  {isAdmin && (
+                  {canEdit && (
                     <>
                       <button
                         onClick={() => handleEditMatch(match)}
@@ -484,13 +507,13 @@ const Matches = ({ isAdmin }) => {
           <MatchDetails 
             matchId={selectedMatch.id} 
             onClose={() => setShowDetailsModal(false)}
-            isAdmin={isAdmin}
+            isAdmin={canEdit}
           />
         )}
       </Modal>
 
-      {/* Match Form Modal - Admin Only */}
-      {isAdmin && (
+      {/* Match Form Modal - Admin or Manager Only */}
+      {canEdit && (
         <Modal
           isOpen={showFormModal}
           onClose={() => {
