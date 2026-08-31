@@ -20,7 +20,6 @@ function App() {
   const [connectionStatus, setConnectionStatus] = useState('testing')
 
   useEffect(() => {
-    // Test Supabase connection
     const testConnection = async () => {
       const result = await testSupabaseConnection()
       setConnectionStatus(result ? 'connected' : 'failed')
@@ -28,7 +27,6 @@ function App() {
     
     testConnection()
 
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log('📱 Session loaded:', session?.user?.email)
       setSession(session)
@@ -38,7 +36,6 @@ function App() {
       setLoading(false)
     })
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       console.log('🔄 Auth changed:', session?.user?.email)
       setSession(session)
@@ -55,13 +52,14 @@ function App() {
   const checkAdminStatus = async (session) => {
     if (session?.user) {
       try {
-        console.log('🔍 Checking admin for:', session.user.id)
+        console.log('🔍 Checking admin for:', session.user.email)
         
+        // FIX: Check by email instead of ID to avoid RLS recursion
         const { data, error } = await supabase
           .from('users')
           .select('role')
-          .eq('id', session.user.id)
-          .single()
+          .eq('email', session.user.email)
+          .maybeSingle()
         
         if (error) {
           console.error('❌ Admin check error:', error)
@@ -93,7 +91,6 @@ function App() {
 
   console.log('🎯 App render - isAdmin:', isAdmin, 'session:', !!session)
 
-  // Protected Route for Admin Only
   const AdminRoute = ({ children }) => {
     if (!session) {
       return <Navigate to="/login" replace />
@@ -112,7 +109,6 @@ function App() {
         <Route path="/" element={
           <MainLayout isAdmin={isAdmin} session={session} />
         }>
-          {/* Public Routes - Everyone can view */}
           <Route index element={<Dashboard isAdmin={isAdmin} />} />
           <Route path="matches" element={<Matches isAdmin={isAdmin} />} />
           <Route path="players" element={<Players isAdmin={isAdmin} />} />
@@ -120,7 +116,6 @@ function App() {
           <Route path="reports" element={<Reports isAdmin={isAdmin} />} />
           <Route path="test" element={<TestConnection />} />
           
-          {/* Admin Only Routes */}
           <Route path="settings" element={
             <AdminRoute>
               <Settings isAdmin={isAdmin} />
