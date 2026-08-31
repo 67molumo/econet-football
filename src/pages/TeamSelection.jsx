@@ -13,11 +13,8 @@ import {
   ChevronDown,
   ChevronUp,
   RefreshCw,
-  Download,
-  Printer,
-  Move,
   ArrowLeftRight,
-  User
+  Move
 } from 'lucide-react'
 import { usePlayers } from '../hooks/usePlayers'
 import { useMatches } from '../hooks/useMatches'
@@ -147,7 +144,6 @@ const TeamSelection = () => {
     setAvailablePlayers(prev => [...prev, player])
   }
 
-  // Swap two players in starting XI
   const handleSwapPlayers = (player1Id, player2Id) => {
     if (!canEdit) return
     
@@ -415,31 +411,17 @@ const TeamSelection = () => {
             repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,0.05) 40px, rgba(255,255,255,0.05) 41px)
           `
         }}>
-          {/* Field Pattern - Green Pitch Overlay */}
-          <div className="absolute inset-0" style={{
-            backgroundImage: `
-              radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0,0,0,0.1) 100%),
-              repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,0.05) 40px, rgba(255,255,255,0.05) 41px)
-            `
-          }}></div>
-
           {/* Field Markings */}
           <div className="absolute inset-0">
-            {/* Center Line */}
             <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-white/20 transform -translate-x-1/2"></div>
-            {/* Center Circle */}
             <div className="absolute left-1/2 top-1/2 w-24 h-24 rounded-full border-2 border-white/20 transform -translate-x-1/2 -translate-y-1/2"></div>
-            {/* Penalty Area Top */}
             <div className="absolute left-1/2 top-0 w-16 h-12 border-2 border-white/20 transform -translate-x-1/2 rounded-b-full"></div>
-            {/* Penalty Area Bottom */}
             <div className="absolute left-1/2 bottom-0 w-16 h-12 border-2 border-white/20 transform -translate-x-1/2 rounded-t-full"></div>
-            {/* Goal Top */}
             <div className="absolute left-1/2 top-2 w-4 h-3 border-2 border-white/20 transform -translate-x-1/2 rounded-b-full"></div>
-            {/* Goal Bottom */}
             <div className="absolute left-1/2 bottom-2 w-4 h-3 border-2 border-white/20 transform -translate-x-1/2 rounded-t-full"></div>
           </div>
 
-          {/* Field Players */}
+          {/* Field Players - WITH NAMES */}
           <div className="relative z-10 min-h-[480px] sm:min-h-[560px]">
             {/* GK - Special position at the top */}
             <div className="absolute left-1/2 top-4 transform -translate-x-1/2">
@@ -448,7 +430,7 @@ const TeamSelection = () => {
                   <div className={`w-14 h-14 rounded-full border-3 border-yellow-300 shadow-lg flex items-center justify-center text-sm font-bold text-white ${getPositionColor('GK')} hover:scale-110 transition-transform`}>
                     {formationPlayers[0].player.shirt_number || '?'}
                   </div>
-                  <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 whitespace-nowrap text-[10px] font-medium text-white bg-black/70 px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute -bottom-7 left-1/2 transform -translate-x-1/2 whitespace-nowrap text-xs font-semibold text-white bg-black/80 px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
                     {formationPlayers[0].player.display_name}
                   </div>
                 </div>
@@ -465,7 +447,6 @@ const TeamSelection = () => {
               const row = pos.row
               const col = pos.col
               
-              // Calculate position percentages
               const topPos = row === 2 ? '28%' : row === 3 ? '50%' : '72%'
               const leftPos = col + '%'
               const isSelected = selectedForSwap === pos.player?.id
@@ -499,8 +480,13 @@ const TeamSelection = () => {
                       <div className={`w-12 h-12 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-sm font-bold text-white ${getPositionColor(pos.player.position)} hover:scale-110 transition-transform`}>
                         {pos.player.shirt_number || '?'}
                       </div>
-                      <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 whitespace-nowrap text-[10px] font-medium text-white bg-black/70 px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                      {/* Player Name - Always visible on field */}
+                      <div className="absolute -bottom-7 left-1/2 transform -translate-x-1/2 whitespace-nowrap text-xs font-semibold text-white bg-black/80 px-2.5 py-1 rounded-md shadow-lg">
                         {pos.player.display_name}
+                      </div>
+                      {/* Position Label - Small badge */}
+                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 text-[9px] font-bold text-white bg-black/60 px-2 py-0.5 rounded-full">
+                        {pos.label}
                       </div>
                       {isSwapMode && (
                         <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#e67e22] text-white flex items-center justify-center text-[10px] font-bold">
@@ -510,7 +496,7 @@ const TeamSelection = () => {
                     </div>
                   ) : (
                     <div className="w-12 h-12 rounded-full border-2 border-dashed border-white/50 bg-white/10 flex items-center justify-center text-xs text-white/50">
-                      ?
+                      {pos.label}
                     </div>
                   )}
                 </div>
@@ -518,7 +504,7 @@ const TeamSelection = () => {
             })}
           </div>
 
-          {/* Bench Info - on the field */}
+          {/* Bench Info */}
           <div className="relative z-10 mt-4 pt-4 border-t border-white/20">
             <div className="flex flex-wrap items-center justify-center gap-2 text-white/80 text-xs">
               <span className="bg-white/10 px-3 py-1 rounded-full backdrop-blur-sm">
