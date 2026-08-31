@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Calendar, MapPin, Trophy, Users, Award, AlertCircle, Download, FileImage, FileText, Plus, Trash2, Edit2, X } from 'lucide-react'
+import { Calendar, MapPin, Trophy, Users, Award, AlertCircle, Download, FileImage, FileText, Plus, Trash2, Edit2, X, Lock } from 'lucide-react'
 import { useMatches } from '../../hooks/useMatches'
 import Loading from '../common/Loading'
 import Button from '../common/Button'
@@ -11,7 +11,7 @@ import { formatDate, getStatusColor } from '../../utils/helpers'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 
-const MatchDetails = ({ matchId, onClose }) => {
+const MatchDetails = ({ matchId, onClose, isAdmin = false }) => {
   const [match, setMatch] = useState(null)
   const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
@@ -45,6 +45,7 @@ const MatchDetails = ({ matchId, onClose }) => {
   }
 
   const handleRemoveScorer = async (id, playerName) => {
+    if (!isAdmin) return
     if (window.confirm(`Remove ${playerName} from goal scorers?`)) {
       try {
         await removeMatchScorer(id)
@@ -56,6 +57,7 @@ const MatchDetails = ({ matchId, onClose }) => {
   }
 
   const handleRemoveAssist = async (id, playerName) => {
+    if (!isAdmin) return
     if (window.confirm(`Remove ${playerName} from assists?`)) {
       try {
         await removeMatchAssist(id)
@@ -67,6 +69,7 @@ const MatchDetails = ({ matchId, onClose }) => {
   }
 
   const handleRemoveCard = async (id, playerName) => {
+    if (!isAdmin) return
     if (window.confirm(`Remove card from ${playerName}?`)) {
       try {
         await removePlayerCard(id)
@@ -165,6 +168,12 @@ const MatchDetails = ({ matchId, onClose }) => {
         <div className="flex items-center gap-1 text-xs text-gray-500">
           <span>Match ID: {matchId.slice(0, 8)}</span>
           {refreshing && <Loading size="sm" />}
+          {!isAdmin && (
+            <span className="ml-2 inline-flex items-center gap-1 text-[10px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+              <Lock className="w-2.5 h-2.5" />
+              View Only
+            </span>
+          )}
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
@@ -248,7 +257,7 @@ const MatchDetails = ({ matchId, onClose }) => {
           </div>
         )}
 
-        {/* Goal Scorers - With Add/Remove */}
+        {/* Goal Scorers - With Add/Remove (Admin Only) */}
         <div className="mb-3">
           <div className="flex items-center justify-between mb-1.5">
             <h4 className="font-semibold text-gray-900 text-xs sm:text-sm flex items-center gap-1.5">
@@ -256,7 +265,7 @@ const MatchDetails = ({ matchId, onClose }) => {
               Goal Scorers
               <span className="text-xs text-gray-400 font-normal">({match.match_scorers?.length || 0})</span>
             </h4>
-            {match.status !== 'completed' && (
+            {isAdmin && match.status !== 'completed' && (
               <button
                 onClick={() => setShowAddScorerModal(true)}
                 className="flex items-center gap-1 px-2 py-0.5 text-xs text-green-600 hover:bg-green-50 rounded-lg transition-colors"
@@ -279,7 +288,7 @@ const MatchDetails = ({ matchId, onClose }) => {
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-[#e67e22]">{scorer.goals}</span>
                     <span className="text-[10px] text-gray-500">goal{scorer.goals > 1 ? 's' : ''}</span>
-                    {match.status !== 'completed' && (
+                    {isAdmin && match.status !== 'completed' && (
                       <button
                         onClick={() => handleRemoveScorer(scorer.id, scorer.players?.display_name || 'Unknown')}
                         className="p-0.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
@@ -296,7 +305,7 @@ const MatchDetails = ({ matchId, onClose }) => {
           )}
         </div>
 
-        {/* Assists - With Add/Remove */}
+        {/* Assists - With Add/Remove (Admin Only) */}
         <div className="mb-3">
           <div className="flex items-center justify-between mb-1.5">
             <h4 className="font-semibold text-gray-900 text-xs sm:text-sm flex items-center gap-1.5">
@@ -304,7 +313,7 @@ const MatchDetails = ({ matchId, onClose }) => {
               Assists
               <span className="text-xs text-gray-400 font-normal">({match.match_assists?.length || 0})</span>
             </h4>
-            {match.status !== 'completed' && (
+            {isAdmin && match.status !== 'completed' && (
               <button
                 onClick={() => setShowAddAssistModal(true)}
                 className="flex items-center gap-1 px-2 py-0.5 text-xs text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -327,7 +336,7 @@ const MatchDetails = ({ matchId, onClose }) => {
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-blue-600">{assist.assists}</span>
                     <span className="text-[10px] text-gray-500">assist{assist.assists > 1 ? 's' : ''}</span>
-                    {match.status !== 'completed' && (
+                    {isAdmin && match.status !== 'completed' && (
                       <button
                         onClick={() => handleRemoveAssist(assist.id, assist.players?.display_name || 'Unknown')}
                         className="p-0.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
@@ -344,7 +353,7 @@ const MatchDetails = ({ matchId, onClose }) => {
           )}
         </div>
 
-        {/* Cards - With Add/Remove */}
+        {/* Cards - With Add/Remove (Admin Only) */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <h4 className="font-semibold text-gray-900 text-xs sm:text-sm flex items-center gap-1.5">
@@ -352,7 +361,7 @@ const MatchDetails = ({ matchId, onClose }) => {
               Cards
               <span className="text-xs text-gray-400 font-normal">({match.player_cards?.length || 0})</span>
             </h4>
-            {match.status !== 'completed' && (
+            {isAdmin && match.status !== 'completed' && (
               <button
                 onClick={() => setShowAddCardModal(true)}
                 className="flex items-center gap-1 px-2 py-0.5 text-xs text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -381,7 +390,7 @@ const MatchDetails = ({ matchId, onClose }) => {
                     {card.minute && (
                       <span className="text-[10px] text-gray-500">{card.minute}'</span>
                     )}
-                    {match.status !== 'completed' && (
+                    {isAdmin && match.status !== 'completed' && (
                       <button
                         onClick={() => handleRemoveCard(card.id, card.players?.display_name || 'Unknown')}
                         className="p-0.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
@@ -406,56 +415,62 @@ const MatchDetails = ({ matchId, onClose }) => {
         </div>
       </div>
 
-      {/* Add Scorer Modal */}
-      <Modal
-        isOpen={showAddScorerModal}
-        onClose={() => setShowAddScorerModal(false)}
-        title="Add Goal Scorer"
-        size="sm"
-      >
-        <AddScorerForm
-          matchId={matchId}
-          onSuccess={() => {
-            setShowAddScorerModal(false)
-            refreshMatch()
-          }}
-          onCancel={() => setShowAddScorerModal(false)}
-        />
-      </Modal>
+      {/* Add Scorer Modal - Admin Only */}
+      {isAdmin && (
+        <Modal
+          isOpen={showAddScorerModal}
+          onClose={() => setShowAddScorerModal(false)}
+          title="Add Goal Scorer"
+          size="sm"
+        >
+          <AddScorerForm
+            matchId={matchId}
+            onSuccess={() => {
+              setShowAddScorerModal(false)
+              refreshMatch()
+            }}
+            onCancel={() => setShowAddScorerModal(false)}
+          />
+        </Modal>
+      )}
 
-      {/* Add Assist Modal */}
-      <Modal
-        isOpen={showAddAssistModal}
-        onClose={() => setShowAddAssistModal(false)}
-        title="Add Assist"
-        size="sm"
-      >
-        <AddAssistForm
-          matchId={matchId}
-          onSuccess={() => {
-            setShowAddAssistModal(false)
-            refreshMatch()
-          }}
-          onCancel={() => setShowAddAssistModal(false)}
-        />
-      </Modal>
+      {/* Add Assist Modal - Admin Only */}
+      {isAdmin && (
+        <Modal
+          isOpen={showAddAssistModal}
+          onClose={() => setShowAddAssistModal(false)}
+          title="Add Assist"
+          size="sm"
+        >
+          <AddAssistForm
+            matchId={matchId}
+            onSuccess={() => {
+              setShowAddAssistModal(false)
+              refreshMatch()
+            }}
+            onCancel={() => setShowAddAssistModal(false)}
+          />
+        </Modal>
+      )}
 
-      {/* Add Card Modal */}
-      <Modal
-        isOpen={showAddCardModal}
-        onClose={() => setShowAddCardModal(false)}
-        title="Add Card"
-        size="sm"
-      >
-        <AddCardForm
-          matchId={matchId}
-          onSuccess={() => {
-            setShowAddCardModal(false)
-            refreshMatch()
-          }}
-          onCancel={() => setShowAddCardModal(false)}
-        />
-      </Modal>
+      {/* Add Card Modal - Admin Only */}
+      {isAdmin && (
+        <Modal
+          isOpen={showAddCardModal}
+          onClose={() => setShowAddCardModal(false)}
+          title="Add Card"
+          size="sm"
+        >
+          <AddCardForm
+            matchId={matchId}
+            onSuccess={() => {
+              setShowAddCardModal(false)
+              refreshMatch()
+            }}
+            onCancel={() => setShowAddCardModal(false)}
+          />
+        </Modal>
+      )}
     </div>
   )
 }

@@ -1,13 +1,17 @@
 import React from 'react'
-import { Menu, Bell, User, LogOut, Shield } from 'lucide-react'
+import { Menu, Bell, User, LogOut, Shield, LogIn } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import supabase from '../../lib/supabase'
 
-const Header = ({ onMenuClick }) => {
+const Header = ({ onMenuClick, isAdmin, session }) => {
   const navigate = useNavigate()
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
+    navigate('/')
+  }
+
+  const handleLogin = () => {
     navigate('/login')
   }
 
@@ -28,23 +32,46 @@ const Header = ({ onMenuClick }) => {
           <div className="hidden lg:block">
             <h2 className="text-sm font-medium text-gray-600">Dashboard</h2>
           </div>
+          {isAdmin && (
+            <span className="hidden sm:inline-flex px-2 py-0.5 text-[10px] font-semibold rounded-full bg-green-100 text-green-800">
+              Admin
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-1 sm:gap-2">
+          {/* Notification Bell - Always visible */}
           <button className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors relative">
             <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
             <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
           </button>
-          <button className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors hidden sm:block">
-            <User className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-          </button>
-          <button
-            onClick={handleLogout}
-            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors text-red-500"
-            title="Logout"
-          >
-            <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
+          
+          {session ? (
+            <>
+              {/* User Profile - Desktop only */}
+              <button className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors hidden sm:block">
+                <User className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+              </button>
+              
+              {/* Logout Button */}
+              <button
+                onClick={handleLogout}
+                className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors text-red-500"
+                title="Logout"
+              >
+                <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+            </>
+          ) : (
+            /* Login Button - Show when not logged in */
+            <button
+              onClick={handleLogin}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#1a4d7a] hover:bg-blue-50 rounded-lg transition-colors"
+            >
+              <LogIn className="w-4 h-4" />
+              <span className="hidden sm:inline">Sign In</span>
+            </button>
+          )}
         </div>
       </div>
     </header>

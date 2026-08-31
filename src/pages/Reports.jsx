@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { FileText, Download, Calendar, Users, Trophy, BarChart, Printer, ChevronDown } from 'lucide-react'
+import { FileText, Download, Calendar, Users, Trophy, BarChart, Printer, ChevronDown, Lock } from 'lucide-react'
 import { useMatches } from '../hooks/useMatches'
 import { usePlayers } from '../hooks/usePlayers'
 import Button from '../components/common/Button'
@@ -7,7 +7,7 @@ import Select from '../components/common/Select'
 import Loading from '../components/common/Loading'
 import { formatDate } from '../utils/helpers'
 
-const Reports = () => {
+const Reports = ({ isAdmin }) => {
   const { matches, loading: matchesLoading, getTeamStats } = useMatches()
   const { players, loading: playersLoading } = usePlayers()
   const [teamStats, setTeamStats] = useState(null)
@@ -31,6 +31,7 @@ const Reports = () => {
   }
 
   const generateReport = async () => {
+    if (!isAdmin) return
     setGenerating(true)
     try {
       // Simulate report generation
@@ -93,7 +94,7 @@ Summary:
 
   if (matchesLoading || playersLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
+      <div className="flex justify-center items-center h-48 sm:h-64">
         <Loading size="lg" />
       </div>
     )
@@ -108,55 +109,80 @@ Summary:
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
-        <p className="text-gray-500">Generate and view detailed reports</p>
-      </div>
-
-      {/* Generate Report Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-        <h3 className="font-semibold text-gray-900 mb-4">Generate New Report</h3>
-        <div className="flex flex-col md:flex-row gap-4 items-end">
-          <div className="flex-1">
-            <Select
-              label="Report Type"
-              value={reportType}
-              onChange={(e) => setReportType(e.target.value)}
-            >
-              {reportTypes.map(type => (
-                <option key={type.value} value={type.value}>{type.label}</option>
-              ))}
-            </Select>
+      <div className="mb-4 sm:mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">Reports</h1>
+            <p className="text-xs sm:text-sm text-gray-500">
+              {isAdmin ? 'Generate and view detailed reports' : 'View detailed reports'}
+            </p>
           </div>
-          <Button
-            onClick={generateReport}
-            isLoading={generating}
-            className="flex items-center gap-2"
-          >
-            <FileText className="w-4 h-4" />
-            Generate Report
-          </Button>
+          {!isAdmin && (
+            <div className="hidden sm:flex items-center gap-1.5 text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full">
+              <Lock className="w-3 h-3" />
+              <span>View Only</span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Stats Summary */}
+      {/* Generate Report Section - Admin Only */}
+      {isAdmin && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-4 sm:mb-6">
+          <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-3 sm:mb-4">Generate New Report</h3>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-end">
+            <div className="flex-1 w-full sm:w-auto">
+              <Select
+                label="Report Type"
+                value={reportType}
+                onChange={(e) => setReportType(e.target.value)}
+                className="w-full"
+              >
+                {reportTypes.map(type => (
+                  <option key={type.value} value={type.value}>{type.label}</option>
+                ))}
+              </Select>
+            </div>
+            <Button
+              onClick={generateReport}
+              isLoading={generating}
+              className="flex items-center gap-2 w-full sm:w-auto"
+            >
+              <FileText className="w-4 h-4" />
+              Generate Report
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Public message when not logged in */}
+      {!isAdmin && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
+          <p className="text-xs sm:text-sm text-blue-700">
+            <span className="font-medium">🔍 Public View:</span> You can view all reports. 
+            Sign in as admin to generate new reports.
+          </p>
+        </div>
+      )}
+
+      {/* Stats Summary - Always Visible */}
       {teamStats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-            <p className="text-sm text-gray-500">Total Matches</p>
-            <p className="text-2xl font-bold text-gray-900">{teamStats.total}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 mb-4 sm:mb-6">
+          <div className="bg-white rounded-xl shadow-sm p-3 sm:p-4 border border-gray-100">
+            <p className="text-[10px] sm:text-sm text-gray-500">Total Matches</p>
+            <p className="text-lg sm:text-2xl font-bold text-gray-900">{teamStats.total}</p>
           </div>
-          <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-            <p className="text-sm text-gray-500">Win Rate</p>
-            <p className="text-2xl font-bold text-green-600">{teamStats.winRate.toFixed(1)}%</p>
+          <div className="bg-white rounded-xl shadow-sm p-3 sm:p-4 border border-gray-100">
+            <p className="text-[10px] sm:text-sm text-gray-500">Win Rate</p>
+            <p className="text-lg sm:text-2xl font-bold text-green-600">{teamStats.winRate.toFixed(1)}%</p>
           </div>
-          <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-            <p className="text-sm text-gray-500">Goals For</p>
-            <p className="text-2xl font-bold text-blue-600">{teamStats.goalsFor}</p>
+          <div className="bg-white rounded-xl shadow-sm p-3 sm:p-4 border border-gray-100">
+            <p className="text-[10px] sm:text-sm text-gray-500">Goals For</p>
+            <p className="text-lg sm:text-2xl font-bold text-blue-600">{teamStats.goalsFor}</p>
           </div>
-          <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-            <p className="text-sm text-gray-500">Goals Against</p>
-            <p className="text-2xl font-bold text-red-600">{teamStats.goalsAgainst}</p>
+          <div className="bg-white rounded-xl shadow-sm p-3 sm:p-4 border border-gray-100">
+            <p className="text-[10px] sm:text-sm text-gray-500">Goals Against</p>
+            <p className="text-lg sm:text-2xl font-bold text-red-600">{teamStats.goalsAgainst}</p>
           </div>
         </div>
       )}
@@ -164,30 +190,30 @@ Summary:
       {/* Generated Reports */}
       {generatedReports.length > 0 ? (
         <div>
-          <h3 className="font-semibold text-gray-900 mb-4">Generated Reports</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-3 sm:mb-4">Generated Reports</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
             {generatedReports.map((report) => (
-              <div key={report.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all">
+              <div key={report.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 hover:shadow-md transition-all">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-[#1a4d7a]/10 flex items-center justify-center">
-                      <FileText className="w-5 h-5 text-[#1a4d7a]" />
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-[#1a4d7a]/10 flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-[#1a4d7a]" />
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">{report.title}</h4>
-                      <p className="text-sm text-gray-500">{report.description}</p>
-                      <p className="text-xs text-gray-400">{formatDate(report.date)}</p>
+                    <div className="min-w-0">
+                      <h4 className="font-semibold text-gray-900 text-sm sm:text-base truncate">{report.title}</h4>
+                      <p className="text-xs sm:text-sm text-gray-500 truncate">{report.description}</p>
+                      <p className="text-[10px] sm:text-xs text-gray-400">{formatDate(report.date)}</p>
                     </div>
                   </div>
                   <button
                     onClick={() => downloadReport(report)}
-                    className="p-2 text-[#1a4d7a] hover:bg-[#1a4d7a]/10 rounded-lg transition-colors"
+                    className="p-1.5 sm:p-2 text-[#1a4d7a] hover:bg-[#1a4d7a]/10 rounded-lg transition-colors flex-shrink-0"
                     title="Download Report"
                   >
                     <Download className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-4 text-sm">
+                <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-100 flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
                   <span className="text-gray-500">Matches: <strong>{report.data.matches}</strong></span>
                   <span className="text-gray-500">Players: <strong>{report.data.players}</strong></span>
                   {report.data.wins !== undefined && (
@@ -199,11 +225,13 @@ Summary:
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-          <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Reports Generated</h3>
-          <p className="text-gray-500">
-            Generate your first report using the form above
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 sm:p-12 text-center">
+          <FileText className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1 sm:mb-2">No Reports Generated</h3>
+          <p className="text-xs sm:text-sm text-gray-500">
+            {isAdmin 
+              ? 'Generate your first report using the form above' 
+              : 'Reports will appear here once generated by an admin'}
           </p>
         </div>
       )}

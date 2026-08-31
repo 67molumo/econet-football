@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Search, User, Award, Calendar, Shield } from 'lucide-react'
+import { Plus, Search, User, Award, Calendar, Shield, Lock } from 'lucide-react'
 import { usePlayers } from '../hooks/usePlayers'
 import { useMatches } from '../hooks/useMatches'
 import Button from '../components/common/Button'
@@ -10,7 +10,7 @@ import Modal from '../components/common/Modal'
 import PlayerForm from '../components/Players/PlayerForm'
 import PlayerProfile from '../components/Players/PlayerProfile'
 
-const Players = () => {
+const Players = ({ isAdmin }) => {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedPlayer, setSelectedPlayer] = useState(null)
   const [showProfileModal, setShowProfileModal] = useState(false)
@@ -53,11 +53,13 @@ const Players = () => {
   }
 
   const handleEditPlayer = (player) => {
+    if (!isAdmin) return
     setEditingPlayer(player)
     setShowFormModal(true)
   }
 
   const handleDeletePlayer = async (id) => {
+    if (!isAdmin) return
     if (window.confirm('Are you sure you want to delete this player?')) {
       try {
         await deletePlayer(id)
@@ -86,7 +88,7 @@ const Players = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
+      <div className="flex justify-center items-center h-48 sm:h-64">
         <Loading size="lg" />
       </div>
     )
@@ -95,32 +97,48 @@ const Players = () => {
   return (
     <div>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Players</h1>
-          <p className="text-gray-500">Manage player profiles and statistics</p>
+          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">Players</h1>
+          <p className="text-xs sm:text-sm text-gray-500">
+            {isAdmin ? 'Manage player profiles and statistics' : 'View player profiles and statistics'}
+          </p>
         </div>
-        <Button 
-          className="flex items-center gap-2"
-          onClick={() => {
-            setEditingPlayer(null)
-            setShowFormModal(true)
-          }}
-        >
-          <Plus className="w-4 h-4" />
-          Add Player
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* View Only Badge for Public Users */}
+          {!isAdmin && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full">
+              <Lock className="w-3 h-3" />
+              <span className="hidden sm:inline">View Only</span>
+            </div>
+          )}
+          
+          {/* Add Player - Admin Only */}
+          {isAdmin && (
+            <Button 
+              className="flex items-center gap-2 text-sm sm:text-base px-3 sm:px-4 py-1.5 sm:py-2"
+              onClick={() => {
+                setEditingPlayer(null)
+                setShowFormModal(true)
+              }}
+            >
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden sm:inline">Add Player</span>
+              <span className="sm:hidden">Add</span>
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-4 mb-4 sm:mb-6">
         <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
           <Input
             placeholder="Search players by name or position..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
+            className="pl-8 sm:pl-9 text-sm h-9 sm:h-10"
           />
         </div>
       </div>
@@ -131,57 +149,78 @@ const Players = () => {
           icon="👤"
           title="No players found"
           description={searchTerm ? "Try adjusting your search" : "Start by adding your first player"}
-          action={!searchTerm && <Button onClick={() => {
-            setEditingPlayer(null)
-            setShowFormModal(true)
-          }}>Add Player</Button>}
+          action={
+            !searchTerm && isAdmin ? (
+              <Button onClick={() => {
+                setEditingPlayer(null)
+                setShowFormModal(true)
+              }}>
+                Add Player
+              </Button>
+            ) : null
+          }
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
           {filteredPlayers.map((player) => {
             const stats = playerStats[player.id] || { appearances: 0, goals: 0, assists: 0 }
             return (
-              <div key={player.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-all">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-16 h-16 rounded-full bg-[#1a4d7a] text-white flex items-center justify-center text-2xl font-bold">
+              <div key={player.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-4 hover:shadow-md transition-all">
+                <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-[#1a4d7a] text-white flex items-center justify-center text-xl sm:text-2xl font-bold flex-shrink-0">
                     {player.shirt_number || '?'}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-900 truncate">{player.display_name}</h3>
-                    <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${getPositionColor(player.position)}`}>
+                    <h3 className="font-semibold text-gray-900 text-sm sm:text-base truncate">{player.display_name}</h3>
+                    <span className={`inline-flex px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-semibold rounded-full ${getPositionColor(player.position)}`}>
                       {player.position || 'N/A'}
                     </span>
+                    {!player.is_active && (
+                      <span className="ml-1.5 inline-flex px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-gray-200 text-gray-600">
+                        Inactive
+                      </span>
+                    )}
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-3 gap-2 text-center pt-4 border-t border-gray-100">
+                <div className="grid grid-cols-3 gap-2 text-center pt-3 border-t border-gray-100">
                   <div>
-                    <p className="text-sm font-bold text-gray-900">{stats.appearances || 0}</p>
-                    <p className="text-xs text-gray-500">Apps</p>
+                    <p className="text-sm sm:text-base font-bold text-gray-900">{stats.appearances || 0}</p>
+                    <p className="text-[10px] sm:text-xs text-gray-500">Apps</p>
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-[#e67e22]">{stats.goals || 0}</p>
-                    <p className="text-xs text-gray-500">Goals</p>
+                    <p className="text-sm sm:text-base font-bold text-[#e67e22]">{stats.goals || 0}</p>
+                    <p className="text-[10px] sm:text-xs text-gray-500">Goals</p>
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-blue-600">{stats.assists || 0}</p>
-                    <p className="text-xs text-gray-500">Assists</p>
+                    <p className="text-sm sm:text-base font-bold text-blue-600">{stats.assists || 0}</p>
+                    <p className="text-[10px] sm:text-xs text-gray-500">Assists</p>
                   </div>
                 </div>
 
-                <div className="flex gap-2 mt-4">
+                <div className="flex gap-2 mt-3 sm:mt-4">
                   <button
                     onClick={() => handleViewProfile(player)}
-                    className="flex-1 px-3 py-2 text-sm font-medium text-[#1a4d7a] border border-[#1a4d7a] rounded-lg hover:bg-[#1a4d7a] hover:text-white transition-all"
+                    className="flex-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-[#1a4d7a] border border-[#1a4d7a] rounded-lg hover:bg-[#1a4d7a] hover:text-white transition-all"
                   >
                     View Profile
                   </button>
-                  <button
-                    onClick={() => handleEditPlayer(player)}
-                    className="px-3 py-2 text-sm font-medium text-orange-600 border border-orange-600 rounded-lg hover:bg-orange-600 hover:text-white transition-all"
-                  >
-                    Edit
-                  </button>
+                  {isAdmin && (
+                    <>
+                      <button
+                        onClick={() => handleEditPlayer(player)}
+                        className="px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-orange-600 border border-orange-600 rounded-lg hover:bg-orange-600 hover:text-white transition-all"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeletePlayer(player.id)}
+                        className="px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-red-600 border border-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-all"
+                      >
+                        Delete
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             )
@@ -204,24 +243,27 @@ const Players = () => {
         )}
       </Modal>
 
-      {/* Player Form Modal */}
-      <Modal
-        isOpen={showFormModal}
-        onClose={() => {
-          setShowFormModal(false)
-          setEditingPlayer(null)
-        }}
-        title={editingPlayer ? 'Edit Player' : 'Add New Player'}
-      >
-        <PlayerForm
-          player={editingPlayer}
-          onSuccess={handleFormSuccess}
-          onCancel={() => {
+      {/* Player Form Modal - Admin Only */}
+      {isAdmin && (
+        <Modal
+          isOpen={showFormModal}
+          onClose={() => {
             setShowFormModal(false)
             setEditingPlayer(null)
           }}
-        />
-      </Modal>
+          title={editingPlayer ? 'Edit Player' : 'Add New Player'}
+          size="md"
+        >
+          <PlayerForm
+            player={editingPlayer}
+            onSuccess={handleFormSuccess}
+            onCancel={() => {
+              setShowFormModal(false)
+              setEditingPlayer(null)
+            }}
+          />
+        </Modal>
+      )}
     </div>
   )
 }

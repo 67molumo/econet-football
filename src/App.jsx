@@ -16,6 +16,7 @@ import TestConnection from './pages/TestConnection'
 function App() {
   const [loading, setLoading] = useState(true)
   const [session, setSession] = useState(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [connectionStatus, setConnectionStatus] = useState('testing')
 
   useEffect(() => {
@@ -30,16 +31,48 @@ function App() {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
+      if (session) {
+        checkAdminStatus(session)
+      }
       setLoading(false)
     })
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
+      if (session) {
+        checkAdminStatus(session)
+      } else {
+        setIsAdmin(false)
+      }
     })
 
     return () => subscription.unsubscribe()
   }, [])
+
+  const checkAdminStatus = async (session) => {
+    if (session?.user) {
+      try {
+        // Check if user has admin role
+        const { data, error } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', session.user.id)
+          .single()
+        
+        if (!error && data) {
+          setIsAdmin(data.role === 'admin' || data.role === 'manager')
+        } else {
+          setIsAdmin(false)
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error)
+        setIsAdmin(false)
+      }
+    } else {
+      setIsAdmin(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -56,10 +89,13 @@ function App() {
     console.error('❌ Supabase connection: FAILED - Check your .env file')
   }
 
-  // Protected Route Component
-  const ProtectedRoute = ({ children }) => {
+  // Protected Route for Admin Only
+  const AdminRoute = ({ children }) => {
     if (!session) {
       return <Navigate to="/login" replace />
+    }
+    if (!isAdmin) {
+      return <Navigate to="/" replace />
     }
     return children
   }
@@ -70,17 +106,22 @@ function App() {
         <Route path="/login" element={!session ? <Login /> : <Navigate to="/" replace />} />
         
         <Route path="/" element={
-          <ProtectedRoute>
-            <MainLayout />
-          </ProtectedRoute>
+          <MainLayout isAdmin={isAdmin} session={session} />
         }>
-          <Route index element={<Dashboard />} />
-          <Route path="matches" element={<Matches />} />
-          <Route path="players" element={<Players />} />
-          <Route path="statistics" element={<Statistics />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="/test" element={<TestConnection />} />
+          {/* Public Routes - Everyone can view */}
+          <Route index element={<Dashboard isAdmin={isAdmin} />} />
+          <Route path="matches" element={<Matches isAdmin={isAdmin} />} />
+          <Route path="players" element={<Players isAdmin={isAdmin} />} />
+          <Route path="statistics" element={<Statistics isAdmin={isAdmin} />} />
+          <Route path="reports" element={<Reports isAdmin={isAdmin} />} />
+          <Route path="test" element={<TestConnection />} />
+          
+          {/* Admin Only Routes */}
+          <Route path="settings" element={
+            <AdminRoute>
+              <Settings isAdmin={isAdmin} />
+            </AdminRoute>
+          } />
         </Route>
         
         <Route path="*" element={<Navigate to="/" replace />} />

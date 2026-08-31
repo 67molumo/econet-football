@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { Plus, Search, Filter, Eye, Edit, Trash2, Calendar, MapPin, Trophy, ChevronDown, ChevronUp, Download } from 'lucide-react'
+import { Plus, Search, Filter, Eye, Edit, Trash2, Calendar, MapPin, Trophy, ChevronDown, ChevronUp, Download, Lock } from 'lucide-react'
 import { useMatches } from '../hooks/useMatches'
 import { useCompetitions } from '../hooks/useCompetitions'
 import { useVenues } from '../hooks/useVenues'
@@ -13,7 +13,7 @@ import MatchForm from '../components/Matches/MatchForm'
 import MatchDetails from '../components/Matches/MatchDetails'
 import { formatDate, getResultColor, getStatusColor } from '../utils/helpers'
 
-const Matches = () => {
+const Matches = ({ isAdmin }) => {
   const [filters, setFilters] = useState({
     search: '',
     status: '',
@@ -26,7 +26,7 @@ const Matches = () => {
   const [editingMatch, setEditingMatch] = useState(null)
   const [sortField, setSortField] = useState('match_date')
   const [sortDirection, setSortDirection] = useState('desc')
-  const [viewMode, setViewMode] = useState('table') // 'table' | 'card'
+  const [viewMode, setViewMode] = useState('table')
 
   const { matches, loading, deleteMatch, refreshMatches } = useMatches(filters)
   const { competitions, loading: compsLoading } = useCompetitions()
@@ -80,11 +80,13 @@ const Matches = () => {
   }
 
   const handleEditMatch = (match) => {
+    if (!isAdmin) return
     setEditingMatch(match)
     setShowFormModal(true)
   }
 
   const handleDeleteMatch = async (id) => {
+    if (!isAdmin) return
     if (window.confirm('Are you sure you want to delete this match?')) {
       try {
         await deleteMatch(id)
@@ -147,9 +149,20 @@ const Matches = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
         <div>
           <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">Matches</h1>
-          <p className="text-xs sm:text-sm text-gray-500">Manage all match fixtures and results</p>
+          <p className="text-xs sm:text-sm text-gray-500">
+            {isAdmin ? 'Manage all match fixtures and results' : 'View all match fixtures and results'}
+          </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* View Only Badge for Public Users */}
+          {!isAdmin && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full">
+              <Lock className="w-3 h-3" />
+              <span className="hidden sm:inline">View Only</span>
+            </div>
+          )}
+          
+          {/* Export Button - Always visible */}
           <Button 
             variant="outline"
             size="sm"
@@ -159,21 +172,25 @@ const Matches = () => {
             <Download className="w-3 h-3 sm:w-4 sm:h-4" />
             <span className="hidden sm:inline">Export</span>
           </Button>
-          <Button 
-            className="flex items-center gap-2 text-sm sm:text-base px-3 sm:px-4 py-1.5 sm:py-2"
-            onClick={() => {
-              setEditingMatch(null)
-              setShowFormModal(true)
-            }}
-          >
-            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span className="hidden sm:inline">Add Match</span>
-            <span className="sm:hidden">Add</span>
-          </Button>
+          
+          {/* Add Match - Admin Only */}
+          {isAdmin && (
+            <Button 
+              className="flex items-center gap-2 text-sm sm:text-base px-3 sm:px-4 py-1.5 sm:py-2"
+              onClick={() => {
+                setEditingMatch(null)
+                setShowFormModal(true)
+              }}
+            >
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden sm:inline">Add Match</span>
+              <span className="sm:hidden">Add</span>
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* Filters - More Compact */}
+      {/* Filters */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-4 mb-4 sm:mb-6">
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <div className="flex-1 min-w-[140px] sm:min-w-[180px] relative">
@@ -229,12 +246,14 @@ const Matches = () => {
           title="No matches found"
           description="Try adjusting your filters or add a new match"
           action={
-            <Button onClick={() => {
-              setEditingMatch(null)
-              setShowFormModal(true)
-            }}>
-              Add Match
-            </Button>
+            isAdmin ? (
+              <Button onClick={() => {
+                setEditingMatch(null)
+                setShowFormModal(true)
+              }}>
+                Add Match
+              </Button>
+            ) : null
           }
         />
       ) : (
@@ -333,20 +352,24 @@ const Matches = () => {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button
-                          onClick={() => handleEditMatch(match)}
-                          className="p-1.5 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
-                          title="Edit Match"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteMatch(match.id)}
-                          className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete Match"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {isAdmin && (
+                          <>
+                            <button
+                              onClick={() => handleEditMatch(match)}
+                              className="p-1.5 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                              title="Edit Match"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteMatch(match.id)}
+                              className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Delete Match"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -410,24 +433,28 @@ const Matches = () => {
                   >
                     Details
                   </button>
-                  <button
-                    onClick={() => handleEditMatch(match)}
-                    className="px-2.5 py-1 text-xs text-orange-600 border border-orange-200 rounded-lg hover:bg-orange-50 transition-colors"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteMatch(match.id)}
-                    className="px-2.5 py-1 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
-                  >
-                    Delete
-                  </button>
+                  {isAdmin && (
+                    <>
+                      <button
+                        onClick={() => handleEditMatch(match)}
+                        className="px-2.5 py-1 text-xs text-orange-600 border border-orange-200 rounded-lg hover:bg-orange-50 transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteMatch(match.id)}
+                        className="px-2.5 py-1 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Table Footer with Pagination */}
+          {/* Table Footer */}
           <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between text-xs text-gray-500">
             <span>
               Showing <span className="font-medium text-gray-700">{sortedMatches.length}</span> matches
@@ -453,29 +480,35 @@ const Matches = () => {
         size="lg"
       >
         {selectedMatch && (
-          <MatchDetails matchId={selectedMatch.id} onClose={() => setShowDetailsModal(false)} />
+          <MatchDetails 
+            matchId={selectedMatch.id} 
+            onClose={() => setShowDetailsModal(false)}
+            isAdmin={isAdmin}
+          />
         )}
       </Modal>
 
-      {/* Match Form Modal */}
-      <Modal
-        isOpen={showFormModal}
-        onClose={() => {
-          setShowFormModal(false)
-          setEditingMatch(null)
-        }}
-        title={editingMatch ? 'Edit Match' : 'Add New Match'}
-        size="lg"
-      >
-        <MatchForm
-          match={editingMatch}
-          onSuccess={handleFormSuccess}
-          onCancel={() => {
+      {/* Match Form Modal - Admin Only */}
+      {isAdmin && (
+        <Modal
+          isOpen={showFormModal}
+          onClose={() => {
             setShowFormModal(false)
             setEditingMatch(null)
           }}
-        />
-      </Modal>
+          title={editingMatch ? 'Edit Match' : 'Add New Match'}
+          size="lg"
+        >
+          <MatchForm
+            match={editingMatch}
+            onSuccess={handleFormSuccess}
+            onCancel={() => {
+              setShowFormModal(false)
+              setEditingMatch(null)
+            }}
+          />
+        </Modal>
+      )}
     </div>
   )
 }

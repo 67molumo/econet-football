@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Trophy, Users, Calendar, TrendingUp, Activity } from 'lucide-react'
+import { Trophy, Users, Calendar, TrendingUp, Activity, Lock } from 'lucide-react'
 import { useMatches } from '../hooks/useMatches'
 import { usePlayers } from '../hooks/usePlayers'
 import StatCard from '../components/Dashboard/StatCard'
@@ -7,7 +7,7 @@ import RecentMatches from '../components/Dashboard/RecentMatches'
 import TopScorers from '../components/Dashboard/TopScorers'
 import Loading from '../components/common/Loading'
 
-const Dashboard = () => {
+const Dashboard = ({ isAdmin }) => {
   const { matches, loading: matchesLoading } = useMatches()
   const { players, loading: playersLoading } = usePlayers()
   const [stats, setStats] = useState({
@@ -61,8 +61,28 @@ const Dashboard = () => {
   return (
     <div>
       <div className="mb-3 sm:mb-4">
-        <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-xs sm:text-sm text-gray-500">Welcome to Econet Football Management System</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">Dashboard</h1>
+            <p className="text-xs sm:text-sm text-gray-500">
+              {isAdmin 
+                ? 'Welcome to Econet Football Management System' 
+                : 'View Econet Football Club statistics and updates'}
+            </p>
+          </div>
+          {!isAdmin && (
+            <div className="hidden sm:flex items-center gap-1.5 text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full">
+              <Lock className="w-3 h-3" />
+              <span>View Only</span>
+            </div>
+          )}
+          {isAdmin && (
+            <div className="hidden sm:flex items-center gap-1.5 text-xs text-green-600 bg-green-50 px-3 py-1.5 rounded-full">
+              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+              <span>Admin Access</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Stats Grid - Responsive */}
@@ -76,7 +96,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
         <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4 lg:p-6 border border-gray-100">
           <h3 className="font-semibold text-gray-900 text-xs sm:text-sm lg:text-base mb-2 sm:mb-3">Recent Matches</h3>
-          <RecentMatches matches={matches} />
+          <RecentMatches matches={matches} isAdmin={isAdmin} />
         </div>
 
         <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4 lg:p-6 border border-gray-100">
@@ -84,6 +104,16 @@ const Dashboard = () => {
           <TopScorers />
         </div>
       </div>
+
+      {/* Admin Only Section - Hidden from public */}
+      {isAdmin && (
+        <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center gap-2 text-sm text-blue-700">
+            <span>🔑</span>
+            <span>You have full access to manage matches, players, and statistics</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
