@@ -144,7 +144,6 @@ const TeamSelection = () => {
     setAvailablePlayers(prev => [...prev, player])
   }
 
-  // Swap two players in starting XI
   const handleSwapPlayers = (player1Id, player2Id) => {
     if (!canEdit) return
     
@@ -404,35 +403,50 @@ const TeamSelection = () => {
           </div>
         </div>
 
-        {/* Football Field - GREEN PITCH with Player Names */}
+        {/* FOOTBALL FIELD - GREEN PITCH WITH VIBRANT COLORS */}
         <div className="relative p-4" style={{ 
-          background: 'linear-gradient(180deg, #1a8a4a 0%, #2d9e5e 30%, #1a8a4a 60%, #0f7a3a 100%)',
+          background: 'linear-gradient(180deg, #1a9e4a 0%, #2daf5e 25%, #3abf6e 50%, #2daf5e 75%, #1a9e4a 100%)',
           backgroundImage: `
-            linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 50%, rgba(0,0,0,0.05) 100%),
-            repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,0.05) 40px, rgba(255,255,255,0.05) 41px)
-          `
+            linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 40%, rgba(0,0,0,0.05) 100%),
+            repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(255,255,255,0.06) 50px, rgba(255,255,255,0.06) 51px)
+          `,
+          boxShadow: 'inset 0 0 60px rgba(0,0,0,0.1)'
         }}>
-          {/* Field Pattern */}
+          {/* Grass Texture Overlay */}
           <div className="absolute inset-0" style={{
             backgroundImage: `
-              radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0,0,0,0.1) 100%),
-              repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,0.05) 40px, rgba(255,255,255,0.05) 41px)
+              radial-gradient(ellipse at 20% 30%, rgba(255,255,255,0.05) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 70%, rgba(255,255,255,0.05) 0%, transparent 50%),
+              radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0,0,0,0.08) 100%),
+              repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,0.04) 40px, rgba(255,255,255,0.04) 41px)
             `
           }}></div>
 
-          {/* Field Markings */}
+          {/* Field Markings - White Lines */}
           <div className="absolute inset-0">
-            <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-white/20 transform -translate-x-1/2"></div>
-            <div className="absolute left-1/2 top-1/2 w-24 h-24 rounded-full border-2 border-white/20 transform -translate-x-1/2 -translate-y-1/2"></div>
-            <div className="absolute left-1/2 top-0 w-16 h-12 border-2 border-white/20 transform -translate-x-1/2 rounded-b-full"></div>
-            <div className="absolute left-1/2 bottom-0 w-16 h-12 border-2 border-white/20 transform -translate-x-1/2 rounded-t-full"></div>
-            <div className="absolute left-1/2 top-2 w-4 h-3 border-2 border-white/20 transform -translate-x-1/2 rounded-b-full"></div>
-            <div className="absolute left-1/2 bottom-2 w-4 h-3 border-2 border-white/20 transform -translate-x-1/2 rounded-t-full"></div>
+            {/* Center Line */}
+            <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-white/30 transform -translate-x-1/2"></div>
+            {/* Center Circle */}
+            <div className="absolute left-1/2 top-1/2 w-32 h-32 rounded-full border-2 border-white/30 transform -translate-x-1/2 -translate-y-1/2"></div>
+            {/* Center Spot */}
+            <div className="absolute left-1/2 top-1/2 w-3 h-3 rounded-full bg-white/30 transform -translate-x-1/2 -translate-y-1/2"></div>
+            {/* Penalty Area Top */}
+            <div className="absolute left-1/2 top-0 w-20 h-14 border-2 border-white/30 transform -translate-x-1/2 rounded-b-full"></div>
+            {/* Penalty Area Bottom */}
+            <div className="absolute left-1/2 bottom-0 w-20 h-14 border-2 border-white/30 transform -translate-x-1/2 rounded-t-full"></div>
+            {/* Goal Top */}
+            <div className="absolute left-1/2 top-2 w-6 h-4 border-2 border-white/30 transform -translate-x-1/2 rounded-b-full"></div>
+            {/* Goal Bottom */}
+            <div className="absolute left-1/2 bottom-2 w-6 h-4 border-2 border-white/30 transform -translate-x-1/2 rounded-t-full"></div>
+            {/* Penalty Spot Top */}
+            <div className="absolute left-1/2 top-[18%] w-2 h-2 rounded-full bg-white/20 transform -translate-x-1/2"></div>
+            {/* Penalty Spot Bottom */}
+            <div className="absolute left-1/2 bottom-[18%] w-2 h-2 rounded-full bg-white/20 transform -translate-x-1/2"></div>
           </div>
 
           {/* Field Players with NAMES ALWAYS VISIBLE */}
           <div className="relative z-10 min-h-[480px] sm:min-h-[560px]">
-            {/* GK */}
+            {/* GK - Special position at the top */}
             <div className="absolute left-1/2 top-4 transform -translate-x-1/2">
               {formationPlayers[0]?.player ? (
                 <div className="relative group cursor-pointer">
@@ -518,7 +532,7 @@ const TeamSelection = () => {
             })}
           </div>
 
-          {/* Bench Info */}
+          {/* Bench Info - on the field */}
           <div className="relative z-10 mt-4 pt-4 border-t border-white/20">
             <div className="flex flex-wrap items-center justify-center gap-2 text-white/80 text-xs">
               <span className="bg-white/10 px-3 py-1 rounded-full backdrop-blur-sm">
