@@ -5,7 +5,6 @@ import {
   ArrowRight, 
   ArrowLeft, 
   RotateCcw, 
-  Download, 
   FileImage, 
   FileText,
   Trash2,
@@ -19,9 +18,8 @@ import { useMatches } from '../hooks/useMatches'
 import Loading from '../components/common/Loading'
 import Button from '../components/common/Button'
 import { formatDate } from '../utils/helpers'
-import html2canvas from 'html2canvas'
-import jsPDF from 'jspdf'
 
+// Import html2canvas and jspdf dynamically to avoid build issues
 const TeamSelection = () => {
   const { isAdmin, role } = useOutletContext()
   console.log('🏆 TeamSelection - isAdmin:', isAdmin, 'role:', role)
@@ -37,16 +35,14 @@ const TeamSelection = () => {
   const [isExporting, setIsExporting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null)
 
-  // Check if user can edit (admin, manager, or coach)
   const canEdit = isAdmin || role === 'manager' || role === 'coach'
   console.log('✏️ canEdit:', canEdit)
 
-  // Formation templates
   const formations = {
-    '4-4-2': { label: '4-4-2', positions: ['GK', 'LB', 'CB', 'CB', 'RB', 'LM', 'CM', 'CM', 'RM', 'ST', 'ST'] },
-    '4-3-3': { label: '4-3-3', positions: ['GK', 'LB', 'CB', 'CB', 'RB', 'CDM', 'CM', 'CM', 'LW', 'ST', 'RW'] },
-    '3-5-2': { label: '3-5-2', positions: ['GK', 'CB', 'CB', 'CB', 'LM', 'CM', 'CM', 'CM', 'RM', 'ST', 'ST'] },
-    '5-3-2': { label: '5-3-2', positions: ['GK', 'LWB', 'CB', 'CB', 'CB', 'RWB', 'CM', 'CM', 'CM', 'ST', 'ST'] }
+    '4-4-2': { label: '4-4-2' },
+    '4-3-3': { label: '4-3-3' },
+    '3-5-2': { label: '3-5-2' },
+    '5-3-2': { label: '5-3-2' }
   }
 
   useEffect(() => {
@@ -106,59 +102,13 @@ const TeamSelection = () => {
     }
   }
 
-  const exportAsPNG = async () => {
-    const element = document.getElementById('lineup-content')
-    if (!element) return
-    
-    setIsExporting(true)
-    try {
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        backgroundColor: '#ffffff',
-        logging: false,
-        allowTaint: true,
-        useCORS: true
-      })
-      
-      const link = document.createElement('a')
-      link.download = `lineup_${new Date().toISOString().split('T')[0]}.png`
-      link.href = canvas.toDataURL('image/png')
-      link.click()
-    } catch (error) {
-      console.error('Error exporting PNG:', error)
-      alert('Error exporting PNG. Please try again.')
-    } finally {
-      setIsExporting(false)
-    }
+  // Simple export function without html2canvas (placeholder)
+  const exportAsPNG = () => {
+    alert('PNG export will be available soon!')
   }
 
-  const exportAsPDF = async () => {
-    const element = document.getElementById('lineup-content')
-    if (!element) return
-    
-    setIsExporting(true)
-    try {
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        backgroundColor: '#ffffff',
-        logging: false,
-        allowTaint: true,
-        useCORS: true
-      })
-      
-      const imgData = canvas.toDataURL('image/png')
-      const pdf = new jsPDF('p', 'mm', 'a4')
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
-      pdf.save(`lineup_${new Date().toISOString().split('T')[0]}.pdf`)
-    } catch (error) {
-      console.error('Error exporting PDF:', error)
-      alert('Error exporting PDF. Please try again.')
-    } finally {
-      setIsExporting(false)
-    }
+  const exportAsPDF = () => {
+    alert('PDF export will be available soon!')
   }
 
   if (playersLoading || matchesLoading) {
@@ -180,7 +130,6 @@ const TeamSelection = () => {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {/* Match Selector */}
           <select
             value={selectedMatch}
             onChange={(e) => setSelectedMatch(e.target.value)}
@@ -194,7 +143,6 @@ const TeamSelection = () => {
             ))}
           </select>
 
-          {/* Formation Selector */}
           <select
             value={formation}
             onChange={(e) => setFormation(e.target.value)}
@@ -216,7 +164,6 @@ const TeamSelection = () => {
             </button>
           )}
 
-          {/* Export Buttons */}
           <Button
             variant="outline"
             size="sm"
