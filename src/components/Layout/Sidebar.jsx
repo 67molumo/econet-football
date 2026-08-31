@@ -19,15 +19,15 @@ import supabase from '../../lib/supabase'
 import nchoathiLogo from '/images/nchoathi_logo.png'
 
 const Sidebar = ({ onClose, isAdmin, session, role }) => {
-const navItems = [
-  { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['admin', 'manager', 'viewer'] },
-  { path: '/matches', icon: Trophy, label: 'Matches', roles: ['admin', 'manager', 'viewer'] },
-  { path: '/players', icon: Users, label: 'Players', roles: ['admin', 'manager', 'viewer'] },
-  { path: '/team-selection', icon: Shield, label: 'Team Selection', roles: ['admin', 'manager', 'coach', 'viewer'] },
-  { path: '/statistics', icon: BarChart3, label: 'Statistics', roles: ['admin', 'manager', 'viewer'] },
-  { path: '/reports', icon: FileText, label: 'Reports', roles: ['admin', 'manager', 'viewer'] },
-  { path: '/settings', icon: Settings, label: 'Settings', roles: ['admin'] },
-]
+  const navItems = [
+    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['admin', 'manager', 'coach', 'viewer'] },
+    { path: '/matches', icon: Trophy, label: 'Matches', roles: ['admin', 'manager', 'coach', 'viewer'] },
+    { path: '/players', icon: Users, label: 'Players', roles: ['admin', 'manager', 'coach', 'viewer'] },
+    { path: '/team-selection', icon: Shield, label: 'Team Selection', roles: ['admin', 'manager', 'coach'] },
+    { path: '/statistics', icon: BarChart3, label: 'Statistics', roles: ['admin', 'manager', 'coach', 'viewer'] },
+    { path: '/reports', icon: FileText, label: 'Reports', roles: ['admin', 'manager', 'coach', 'viewer'] },
+    { path: '/settings', icon: Settings, label: 'Settings', roles: ['admin'] },
+  ]
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -52,6 +52,7 @@ const navItems = [
   const getUserName = () => {
     if (isAdmin) return 'Admin'
     if (role === 'manager') return 'Manager'
+    if (role === 'coach') return 'Coach'
     if (session?.user?.email) {
       const name = session.user.email.split('@')[0]
       return name.charAt(0).toUpperCase() + name.slice(1)
@@ -63,6 +64,7 @@ const navItems = [
     switch(role) {
       case 'admin': return 'bg-green-600/30 text-green-300'
       case 'manager': return 'bg-blue-600/30 text-blue-300'
+      case 'coach': return 'bg-purple-600/30 text-purple-300'
       default: return 'bg-gray-600/30 text-gray-300'
     }
   }
