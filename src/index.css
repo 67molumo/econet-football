@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: #f8fafc;
+  }
+  
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+/* Mobile touch improvements */
+@media (max-width: 640px) {
+  button, 
+  a,
+  select,
+  input[type="submit"],
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  input, select, textarea {
+    font-size: 16px !important; /* Prevents iOS zoom */
+  }
+  
+  /* Improve touch feedback */
+  .tap-highlight-transparent {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Better scrolling */
+  .smooth-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+}

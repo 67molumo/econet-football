@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Background circle -->
+  <circle cx="50" cy="50" r="45" fill="#1a1a2e"/>
+  
+  <!-- Soccer ball pattern -->
+  <circle cx="50" cy="50" r="25" fill="white"/>
+  
+  <!-- Pentagon center -->
+  <polygon points="50,32 56,43 53,56 47,56 44,43" fill="#1a1a2e"/>
+  
+  <!-- Pentagon border lines -->
+  <line x1="50" y1="32" x2="56" y2="43" stroke="#1a1a2e" stroke-width="2"/>
+  <line x1="56" y1="43" x2="53" y2="56" stroke="#1a1a2e" stroke-width="2"/>
+  <line x1="53" y1="56" x2="47" y2="56" stroke="#1a1a2e" stroke-width="2"/>
+  <line x1="47" y1="56" x2="44" y2="43" stroke="#1a1a2e" stroke-width="2"/>
+  <line x1="44" y1="43" x2="50" y2="32" stroke="#1a1a2e" stroke-width="2"/>
+  
+  <!-- Outer pentagon lines -->
+  <line x1="50" y1="32" x2="68" y2="38" stroke="#1a1a2e" stroke-width="2"/>
+  <line x1="56" y1="43" x2="68" y2="55" stroke="#1a1a2e" stroke-width="2"/>
+  <line x1="53" y1="56" x2="58" y2="70" stroke="#1a1a2e" stroke-width="2"/>
+  <line x1="47" y1="56" x2="42" y2="70" stroke="#1a1a2e" stroke-width="2"/>
+  <line x1="44" y1="43" x2="32" y2="55" stroke="#1a1a2e" stroke-width="2"/>
+  <line x1="32" y1="55" x2="32" y2="38" stroke="#1a1a2e" stroke-width="2"/>
+  <line x1="32" y1="38" x2="50" y2="32" stroke="#1a1a2e" stroke-width="2"/>
+  
+  <!-- Small pentagon shapes -->
+  <polygon points="58,36 62,40 59,45 55,45 54,40" fill="#1a1a2e" opacity="0.5"/>
+  <polygon points="62,50 66,54 63,59 59,59 58,54" fill="#1a1a2e" opacity="0.5"/>
+  <polygon points="55,62 59,66 56,71 52,71 51,66" fill="#1a1a2e" opacity="0.5"/>
+  <polygon points="45,62 49,66 46,71 42,71 41,66" fill="#1a1a2e" opacity="0.5"/>
+  <polygon points="38,50 42,54 39,59 35,59 34,54" fill="#1a1a2e" opacity="0.5"/>
+  <polygon points="42,36 46,40 43,45 39,45 38,40" fill="#1a1a2e" opacity="0.5"/>
+</svg>
