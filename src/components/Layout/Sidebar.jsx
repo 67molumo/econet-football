@@ -8,15 +8,18 @@ import {
   FileText, 
   Settings,
   X,
-  Shield,
   LogIn,
-  LogOut
+  LogOut,
+  Home
 } from 'lucide-react'
 import supabase from '../../lib/supabase'
 
+// Import the logo
+import nchoathiLogo from '/images/nchoathi_logo.png'
+
 const Sidebar = ({ onClose, isAdmin, session, role }) => {
   const navItems = [
-    { path: '/', icon: LayoutDashboard, label: 'Dashboard', roles: ['admin', 'manager', 'viewer'] },
+    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['admin', 'manager', 'viewer'] },
     { path: '/matches', icon: Trophy, label: 'Matches', roles: ['admin', 'manager', 'viewer'] },
     { path: '/players', icon: Users, label: 'Players', roles: ['admin', 'manager', 'viewer'] },
     { path: '/statistics', icon: BarChart3, label: 'Statistics', roles: ['admin', 'manager', 'viewer'] },
@@ -33,12 +36,10 @@ const Sidebar = ({ onClose, isAdmin, session, role }) => {
     window.location.href = '/login'
   }
 
-  // Check if user has access to this item
   const hasAccess = (item) => {
     return item.roles.includes(role) || (item.roles.includes('admin') && isAdmin)
   }
 
-  // Get user initials
   const getUserInitials = () => {
     if (session?.user?.email) {
       return session.user.email.charAt(0).toUpperCase()
@@ -46,7 +47,6 @@ const Sidebar = ({ onClose, isAdmin, session, role }) => {
     return 'U'
   }
 
-  // Get user display name
   const getUserName = () => {
     if (isAdmin) return 'Admin'
     if (role === 'manager') return 'Manager'
@@ -57,7 +57,6 @@ const Sidebar = ({ onClose, isAdmin, session, role }) => {
     return 'User'
   }
 
-  // Get role badge color
   const getRoleBadgeColor = () => {
     switch(role) {
       case 'admin': return 'bg-green-600/30 text-green-300'
@@ -68,15 +67,19 @@ const Sidebar = ({ onClose, isAdmin, session, role }) => {
 
   return (
     <div className="h-full flex flex-col bg-[#1a1a2e] text-white">
-      {/* Logo Section */}
+      {/* Logo Section - Clickable to Home */}
       <div className="p-3 sm:p-4 border-b border-gray-700 flex items-center justify-between">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-[#e67e22]" />
+        <NavLink to="/" className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity">
+          <img 
+            src={nchoathiLogo} 
+            alt="Nchoathi FC Logo" 
+            className="w-8 h-8 sm:w-10 sm:h-10 object-contain rounded-lg bg-white/10 p-1"
+          />
           <div>
-            <h1 className="text-sm sm:text-lg font-bold tracking-tight leading-tight">Econet FC</h1>
+            <h1 className="text-sm sm:text-lg font-bold tracking-tight leading-tight">Nchoathi FC</h1>
             <p className="text-[9px] sm:text-xs text-gray-400 leading-tight hidden sm:block">Management System</p>
           </div>
-        </div>
+        </NavLink>
         <button
           onClick={onClose}
           className="lg:hidden p-1 rounded-lg hover:bg-gray-700 transition-colors"
@@ -113,6 +116,22 @@ const Sidebar = ({ onClose, isAdmin, session, role }) => {
             </NavLink>
           )
         })}
+        
+        {/* Home Link at bottom of nav */}
+        <NavLink
+          to="/"
+          onClick={onClose}
+          className={({ isActive }) => `
+            flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 sm:py-2.5 rounded-lg transition-all duration-200 text-xs sm:text-sm mt-2 border-t border-gray-700 pt-3
+            ${isActive 
+              ? 'bg-[#e67e22] text-white shadow-lg' 
+              : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+            }
+          `}
+        >
+          <Home className="w-4 h-4 sm:w-5 sm:h-5" />
+          <span className="font-medium">Home</span>
+        </NavLink>
       </nav>
 
       {/* User Profile / Auth Section */}

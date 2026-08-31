@@ -3,6 +3,9 @@ import { Menu, Bell, User, LogOut, Shield, LogIn } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import supabase from '../../lib/supabase'
 
+// Import the logo
+import nchoathiLogo from '/images/nchoathi_logo.png'
+
 const Header = ({ onMenuClick, isAdmin, session, role }) => {
   const navigate = useNavigate()
 
@@ -15,7 +18,6 @@ const Header = ({ onMenuClick, isAdmin, session, role }) => {
     navigate('/login')
   }
 
-  // Get role badge color
   const getRoleBadgeColor = () => {
     switch(role) {
       case 'admin': return 'bg-green-100 text-green-800'
@@ -35,8 +37,12 @@ const Header = ({ onMenuClick, isAdmin, session, role }) => {
             <Menu className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
           <div className="lg:hidden flex items-center gap-1.5">
-            <Shield className="w-5 h-5 text-[#e67e22]" />
-            <h2 className="text-sm sm:text-base font-bold text-[#1a1a2e]">Econet FC</h2>
+            <img 
+              src={nchoathiLogo} 
+              alt="Nchoathi FC Logo" 
+              className="w-6 h-6 object-contain rounded"
+            />
+            <h2 className="text-sm sm:text-base font-bold text-[#1a1a2e]">Nchoathi FC</h2>
           </div>
           <div className="hidden lg:block">
             <h2 className="text-sm font-medium text-gray-600">Dashboard</h2>

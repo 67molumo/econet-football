@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import supabase from './lib/supabase'
 import { useRole } from './hooks/useRole'
 import MainLayout from './components/Layout/MainLayout'
+import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
 import Matches from './pages/Matches'
 import Players from './pages/Players'
@@ -13,12 +14,14 @@ import Login from './pages/Login'
 import Loading from './components/common/Loading'
 
 function App() {
-  const { role, isAdmin, loading } = useRole()
+  const { role, isAdmin, loading: roleLoading } = useRole()
   const [session, setSession] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
+      setLoading(false)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -28,7 +31,7 @@ function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  if (loading) {
+  if (loading || roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loading size="lg" />
@@ -49,24 +52,52 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={!session ? <Login /> : <Navigate to="/" replace />} />
-        
-        <Route path="/" element={
+        {/* Public Home Route - No Layout */}
+        <Route path="/" element={<Home />} />
+
+        {/* Login Route */}
+        <Route path="/login" element={!session ? <Login /> : <Navigate to="/dashboard" replace />} />
+
+        {/* Protected Routes with Layout */}
+        <Route path="/dashboard" element={
           <MainLayout isAdmin={isAdmin} session={session} role={role} />
         }>
-          <Route index element={<Dashboard isAdmin={isAdmin} role={role} />} />
-          <Route path="matches" element={<Matches isAdmin={isAdmin} role={role} />} />
-          <Route path="players" element={<Players isAdmin={isAdmin} role={role} />} />
-          <Route path="statistics" element={<Statistics isAdmin={isAdmin} role={role} />} />
-          <Route path="reports" element={<Reports isAdmin={isAdmin} role={role} />} />
-          
-          <Route path="settings" element={
-            <AdminRoute>
-              <Settings isAdmin={isAdmin} role={role} />
-            </AdminRoute>
-          } />
+          <Route index element={<Dashboard />} />
         </Route>
-        
+
+        <Route path="/matches" element={
+          <MainLayout isAdmin={isAdmin} session={session} role={role} />
+        }>
+          <Route index element={<Matches />} />
+        </Route>
+
+        <Route path="/players" element={
+          <MainLayout isAdmin={isAdmin} session={session} role={role} />
+        }>  
+          <Route index element={<Players />} />
+        </Route>
+
+        <Route path="/statistics" element={
+          <MainLayout isAdmin={isAdmin} session={session} role={role} />
+        }>
+          <Route index element={<Statistics />} />
+        </Route>
+
+        <Route path="/reports" element={
+          <MainLayout isAdmin={isAdmin} session={session} role={role} />
+        }>
+          <Route index element={<Reports />} />
+        </Route>
+
+        <Route path="/settings" element={
+          <AdminRoute>
+            <MainLayout isAdmin={isAdmin} session={session} role={role} />
+          </AdminRoute>
+        }>
+          <Route index element={<Settings />} />
+        </Route>
+
+        {/* Catch all - redirect to home */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
