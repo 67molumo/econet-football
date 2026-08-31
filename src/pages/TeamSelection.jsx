@@ -13,8 +13,8 @@ import {
   ChevronDown,
   ChevronUp,
   RefreshCw,
-  ArrowLeftRight,
-  Move
+  Move,
+  ArrowLeftRight
 } from 'lucide-react'
 import { usePlayers } from '../hooks/usePlayers'
 import { useMatches } from '../hooks/useMatches'
@@ -144,6 +144,7 @@ const TeamSelection = () => {
     setAvailablePlayers(prev => [...prev, player])
   }
 
+  // Swap two players in starting XI
   const handleSwapPlayers = (player1Id, player2Id) => {
     if (!canEdit) return
     
@@ -403,7 +404,7 @@ const TeamSelection = () => {
           </div>
         </div>
 
-        {/* Football Field - GREEN PITCH */}
+        {/* Football Field - GREEN PITCH with Player Names */}
         <div className="relative p-4" style={{ 
           background: 'linear-gradient(180deg, #1a8a4a 0%, #2d9e5e 30%, #1a8a4a 60%, #0f7a3a 100%)',
           backgroundImage: `
@@ -411,6 +412,14 @@ const TeamSelection = () => {
             repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,0.05) 40px, rgba(255,255,255,0.05) 41px)
           `
         }}>
+          {/* Field Pattern */}
+          <div className="absolute inset-0" style={{
+            backgroundImage: `
+              radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0,0,0,0.1) 100%),
+              repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,0.05) 40px, rgba(255,255,255,0.05) 41px)
+            `
+          }}></div>
+
           {/* Field Markings */}
           <div className="absolute inset-0">
             <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-white/20 transform -translate-x-1/2"></div>
@@ -421,16 +430,16 @@ const TeamSelection = () => {
             <div className="absolute left-1/2 bottom-2 w-4 h-3 border-2 border-white/20 transform -translate-x-1/2 rounded-t-full"></div>
           </div>
 
-          {/* Field Players - WITH NAMES */}
+          {/* Field Players with NAMES ALWAYS VISIBLE */}
           <div className="relative z-10 min-h-[480px] sm:min-h-[560px]">
-            {/* GK - Special position at the top */}
+            {/* GK */}
             <div className="absolute left-1/2 top-4 transform -translate-x-1/2">
               {formationPlayers[0]?.player ? (
                 <div className="relative group cursor-pointer">
                   <div className={`w-14 h-14 rounded-full border-3 border-yellow-300 shadow-lg flex items-center justify-center text-sm font-bold text-white ${getPositionColor('GK')} hover:scale-110 transition-transform`}>
                     {formationPlayers[0].player.shirt_number || '?'}
                   </div>
-                  <div className="absolute -bottom-7 left-1/2 transform -translate-x-1/2 whitespace-nowrap text-xs font-semibold text-white bg-black/80 px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                  <div className="absolute -bottom-7 left-1/2 transform -translate-x-1/2 whitespace-nowrap text-xs font-semibold text-white bg-black/80 px-2.5 py-1 rounded-md shadow-lg">
                     {formationPlayers[0].player.display_name}
                   </div>
                 </div>
@@ -480,14 +489,17 @@ const TeamSelection = () => {
                       <div className={`w-12 h-12 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-sm font-bold text-white ${getPositionColor(pos.player.position)} hover:scale-110 transition-transform`}>
                         {pos.player.shirt_number || '?'}
                       </div>
-                      {/* Player Name - Always visible on field */}
-                      <div className="absolute -bottom-7 left-1/2 transform -translate-x-1/2 whitespace-nowrap text-xs font-semibold text-white bg-black/80 px-2.5 py-1 rounded-md shadow-lg">
+                      
+                      {/* Player Name - Always visible */}
+                      <div className="absolute -bottom-7 left-1/2 transform -translate-x-1/2 whitespace-nowrap text-xs font-semibold text-white bg-black/80 px-2.5 py-1 rounded-md shadow-lg pointer-events-none">
                         {pos.player.display_name}
                       </div>
-                      {/* Position Label - Small badge */}
-                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 text-[9px] font-bold text-white bg-black/60 px-2 py-0.5 rounded-full">
+                      
+                      {/* Position Label */}
+                      <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 whitespace-nowrap text-[10px] font-bold text-white bg-black/60 px-2 py-0.5 rounded-full pointer-events-none">
                         {pos.label}
                       </div>
+                      
                       {isSwapMode && (
                         <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#e67e22] text-white flex items-center justify-center text-[10px] font-bold">
                           <Move className="w-3 h-3" />
@@ -495,8 +507,10 @@ const TeamSelection = () => {
                       )}
                     </div>
                   ) : (
-                    <div className="w-12 h-12 rounded-full border-2 border-dashed border-white/50 bg-white/10 flex items-center justify-center text-xs text-white/50">
-                      {pos.label}
+                    <div className="relative">
+                      <div className="w-12 h-12 rounded-full border-2 border-dashed border-white/50 bg-white/10 flex items-center justify-center text-xs text-white/50">
+                        {pos.label}
+                      </div>
                     </div>
                   )}
                 </div>
