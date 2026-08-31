@@ -11,7 +11,6 @@ import {
   Trash2,
   Plus,
   X,
-  Check,
   Shield,
   Trophy
 } from 'lucide-react'
@@ -24,8 +23,9 @@ import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 
 const TeamSelection = () => {
-     console.log('🏆 TeamSelection - isAdmin:', isAdmin, 'role:', role)
   const { isAdmin, role } = useOutletContext()
+  console.log('🏆 TeamSelection - isAdmin:', isAdmin, 'role:', role)
+  
   const { players, loading: playersLoading, deletePlayer, refreshPlayers } = usePlayers()
   const { matches, loading: matchesLoading } = useMatches()
   
@@ -36,7 +36,10 @@ const TeamSelection = () => {
   const [formation, setFormation] = useState('4-4-2')
   const [isExporting, setIsExporting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null)
-  const [showAddPlayerModal, setShowAddPlayerModal] = useState(false)
+
+  // Check if user can edit (admin, manager, or coach)
+  const canEdit = isAdmin || role === 'manager' || role === 'coach'
+  console.log('✏️ canEdit:', canEdit)
 
   // Formation templates
   const formations = {
@@ -48,7 +51,6 @@ const TeamSelection = () => {
 
   useEffect(() => {
     if (!playersLoading && players.length > 0) {
-      // Initialize with first 11 players as starting XI
       const activePlayers = players.filter(p => p.is_active !== false)
       const firstEleven = activePlayers.slice(0, 11)
       const remaining = activePlayers.slice(11)
@@ -60,23 +62,27 @@ const TeamSelection = () => {
   }, [players, playersLoading])
 
   const moveToStarting = (player) => {
+    if (!canEdit) return
     setSubstitutes(prev => prev.filter(p => p.id !== player.id))
     setAvailablePlayers(prev => prev.filter(p => p.id !== player.id))
     setStartingXI(prev => [...prev, player])
   }
 
   const moveToSubstitutes = (player) => {
+    if (!canEdit) return
     setStartingXI(prev => prev.filter(p => p.id !== player.id))
     setSubstitutes(prev => [...prev, player])
   }
 
   const moveToAvailable = (player) => {
+    if (!canEdit) return
     setStartingXI(prev => prev.filter(p => p.id !== player.id))
     setSubstitutes(prev => prev.filter(p => p.id !== player.id))
     setAvailablePlayers(prev => [...prev, player])
   }
 
   const resetTeam = () => {
+    if (!canEdit) return
     const activePlayers = players.filter(p => p.is_active !== false)
     const firstEleven = activePlayers.slice(0, 11)
     const remaining = activePlayers.slice(11)
@@ -92,7 +98,6 @@ const TeamSelection = () => {
       await deletePlayer(playerId)
       await refreshPlayers()
       setShowDeleteConfirm(null)
-      // Remove from all lists
       setStartingXI(prev => prev.filter(p => p.id !== playerId))
       setSubstitutes(prev => prev.filter(p => p.id !== playerId))
       setAvailablePlayers(prev => prev.filter(p => p.id !== playerId))
@@ -164,8 +169,6 @@ const TeamSelection = () => {
     )
   }
 
-  const canEdit = isAdmin || role === 'manager' || role === 'coach'
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -196,6 +199,7 @@ const TeamSelection = () => {
             value={formation}
             onChange={(e) => setFormation(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-[#1a4d7a] focus:border-[#1a4d7a]"
+            disabled={!canEdit}
           >
             {Object.entries(formations).map(([key, value]) => (
               <option key={key} value={key}>{value.label}</option>
