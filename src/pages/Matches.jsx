@@ -14,6 +14,7 @@ import MatchDetails from '../components/Matches/MatchDetails'
 import { formatDate, getResultColor, getStatusColor } from '../utils/helpers'
 
 const Matches = ({ isAdmin }) => {
+    console.log('⚽ Matches received isAdmin:', isAdmin)
   const [filters, setFilters] = useState({
     search: '',
     status: '',

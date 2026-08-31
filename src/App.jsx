@@ -30,6 +30,7 @@ function App() {
 
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('📱 Session loaded:', session?.user?.email)
       setSession(session)
       if (session) {
         checkAdminStatus(session)
@@ -39,6 +40,7 @@ function App() {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('🔄 Auth changed:', session?.user?.email)
       setSession(session)
       if (session) {
         checkAdminStatus(session)
@@ -53,20 +55,27 @@ function App() {
   const checkAdminStatus = async (session) => {
     if (session?.user) {
       try {
-        // Check if user has admin role
+        console.log('🔍 Checking admin for:', session.user.id)
+        
         const { data, error } = await supabase
           .from('users')
           .select('role')
           .eq('id', session.user.id)
           .single()
         
-        if (!error && data) {
-          setIsAdmin(data.role === 'admin' || data.role === 'manager')
-        } else {
+        if (error) {
+          console.error('❌ Admin check error:', error)
           setIsAdmin(false)
+          return
         }
+        
+        console.log('✅ Admin data:', data)
+        const isUserAdmin = data?.role === 'admin' || data?.role === 'manager'
+        console.log('✅ isAdmin set to:', isUserAdmin)
+        setIsAdmin(isUserAdmin)
+        
       } catch (error) {
-        console.error('Error checking admin status:', error)
+        console.error('❌ Error checking admin status:', error)
         setIsAdmin(false)
       }
     } else {
@@ -82,12 +91,7 @@ function App() {
     )
   }
 
-  // Show connection status in console
-  if (connectionStatus === 'connected') {
-    console.log('✅ Supabase connection: SUCCESS')
-  } else if (connectionStatus === 'failed') {
-    console.error('❌ Supabase connection: FAILED - Check your .env file')
-  }
+  console.log('🎯 App render - isAdmin:', isAdmin, 'session:', !!session)
 
   // Protected Route for Admin Only
   const AdminRoute = ({ children }) => {

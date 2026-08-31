@@ -11,6 +11,7 @@ import PlayerForm from '../components/Players/PlayerForm'
 import PlayerProfile from '../components/Players/PlayerProfile'
 
 const Players = ({ isAdmin }) => {
+    console.log('👤 Players received isAdmin:', isAdmin)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedPlayer, setSelectedPlayer] = useState(null)
   const [showProfileModal, setShowProfileModal] = useState(false)
