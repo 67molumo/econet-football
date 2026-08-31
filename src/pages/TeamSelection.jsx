@@ -190,18 +190,36 @@ const TeamSelection = () => {
     }
   }
 
+  // Enhanced PNG Export with better quality
   const exportAsPNG = async () => {
     const element = document.getElementById('lineup-content')
-    if (!element) return
+    if (!element) {
+      alert('Lineup content not found!')
+      return
+    }
     
     setIsExporting(true)
     try {
+      // Force a reflow to ensure all styles are applied
+      element.style.display = 'block'
+      void element.offsetHeight
+      
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: 3,
         backgroundColor: '#ffffff',
         logging: false,
         allowTaint: true,
-        useCORS: true
+        useCORS: true,
+        width: element.scrollWidth,
+        height: element.scrollHeight,
+        onclone: (clonedDoc, clonedElement) => {
+          // Ensure the field is green in the clone
+          const field = clonedElement.querySelector('.field-pitch')
+          if (field) {
+            field.style.background = 'linear-gradient(180deg, #1a9e4a 0%, #2daf5e 25%, #3abf6e 50%, #2daf5e 75%, #1a9e4a 100%)'
+            field.style.boxShadow = 'inset 0 0 60px rgba(0,0,0,0.1)'
+          }
+        }
       })
       
       const link = document.createElement('a')
@@ -216,22 +234,43 @@ const TeamSelection = () => {
     }
   }
 
+  // Enhanced PDF Export with better quality
   const exportAsPDF = async () => {
     const element = document.getElementById('lineup-content')
-    if (!element) return
+    if (!element) {
+      alert('Lineup content not found!')
+      return
+    }
     
     setIsExporting(true)
     try {
+      element.style.display = 'block'
+      void element.offsetHeight
+      
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: 3,
         backgroundColor: '#ffffff',
         logging: false,
         allowTaint: true,
-        useCORS: true
+        useCORS: true,
+        width: element.scrollWidth,
+        height: element.scrollHeight,
+        onclone: (clonedDoc, clonedElement) => {
+          const field = clonedElement.querySelector('.field-pitch')
+          if (field) {
+            field.style.background = 'linear-gradient(180deg, #1a9e4a 0%, #2daf5e 25%, #3abf6e 50%, #2daf5e 75%, #1a9e4a 100%)'
+            field.style.boxShadow = 'inset 0 0 60px rgba(0,0,0,0.1)'
+          }
+        }
       })
       
       const imgData = canvas.toDataURL('image/png')
-      const pdf = new jsPDF('p', 'mm', 'a4')
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      })
+      
       const pdfWidth = pdf.internal.pageSize.getWidth()
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width
       
@@ -404,14 +443,19 @@ const TeamSelection = () => {
         </div>
 
         {/* FOOTBALL FIELD - GREEN PITCH WITH VIBRANT COLORS */}
-        <div className="relative p-4" style={{ 
-          background: 'linear-gradient(180deg, #1a9e4a 0%, #2daf5e 25%, #3abf6e 50%, #2daf5e 75%, #1a9e4a 100%)',
-          backgroundImage: `
-            linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 40%, rgba(0,0,0,0.05) 100%),
-            repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(255,255,255,0.06) 50px, rgba(255,255,255,0.06) 51px)
-          `,
-          boxShadow: 'inset 0 0 60px rgba(0,0,0,0.1)'
-        }}>
+        <div 
+          className="field-pitch relative p-4" 
+          style={{ 
+            background: 'linear-gradient(180deg, #1a9e4a 0%, #2daf5e 25%, #3abf6e 50%, #2daf5e 75%, #1a9e4a 100%)',
+            backgroundImage: `
+              linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 40%, rgba(0,0,0,0.05) 100%),
+              repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(255,255,255,0.06) 50px, rgba(255,255,255,0.06) 51px)
+            `,
+            boxShadow: 'inset 0 0 60px rgba(0,0,0,0.1)',
+            position: 'relative',
+            overflow: 'hidden'
+          }}
+        >
           {/* Grass Texture Overlay */}
           <div className="absolute inset-0" style={{
             backgroundImage: `
@@ -419,11 +463,12 @@ const TeamSelection = () => {
               radial-gradient(ellipse at 80% 70%, rgba(255,255,255,0.05) 0%, transparent 50%),
               radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0,0,0,0.08) 100%),
               repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,0.04) 40px, rgba(255,255,255,0.04) 41px)
-            `
+            `,
+            pointerEvents: 'none'
           }}></div>
 
           {/* Field Markings - White Lines */}
-          <div className="absolute inset-0">
+          <div className="absolute inset-0" style={{ pointerEvents: 'none' }}>
             {/* Center Line */}
             <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-white/30 transform -translate-x-1/2"></div>
             {/* Center Circle */}
@@ -483,11 +528,7 @@ const TeamSelection = () => {
                 >
                   {pos.player ? (
                     <div 
-                      className={`relative group cursor-pointer transition-all ${
-                        isSelected ? 'scale-110 ring-4 ring-yellow-400 ring-offset-2' : ''
-                      } ${
-                        isSwapMode ? 'hover:scale-110' : ''
-                      }`}
+                      className={`relative group cursor-pointer transition-all ${isSelected ? 'scale-110 ring-4 ring-yellow-400 ring-offset-2' : ''} ${isSwapMode ? 'hover:scale-110' : ''}`}
                       onClick={() => {
                         if (swapMode && canEdit) {
                           if (selectedForSwap === pos.player.id) {
@@ -532,7 +573,7 @@ const TeamSelection = () => {
             })}
           </div>
 
-          {/* Bench Info - on the field */}
+          {/* Bench Info */}
           <div className="relative z-10 mt-4 pt-4 border-t border-white/20">
             <div className="flex flex-wrap items-center justify-center gap-2 text-white/80 text-xs">
               <span className="bg-white/10 px-3 py-1 rounded-full backdrop-blur-sm">
