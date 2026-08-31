@@ -153,6 +153,36 @@
     background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
   }
   
+  /* Football Field Green Gradients */
+  .bg-field-green {
+    background: linear-gradient(180deg, #1a8a4a 0%, #2d9e5e 30%, #1a8a4a 60%, #0f7a3a 100%);
+  }
+  
+  .bg-field-green-light {
+    background: linear-gradient(180deg, #2d9e5e 0%, #3aaf6e 50%, #2d9e5e 100%);
+  }
+  
+  .bg-field-green-dark {
+    background: linear-gradient(180deg, #0f7a3a 0%, #1a6b3a 50%, #0f7a3a 100%);
+  }
+  
+  /* Field Pattern Overlay */
+  .field-pattern {
+    background-image: 
+      radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0,0,0,0.1) 100%),
+      repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,0.05) 40px, rgba(255,255,255,0.05) 41px);
+  }
+  
+  /* Field Stripe Pattern */
+  .field-stripes {
+    background-image: repeating-linear-gradient(0deg, 
+      transparent 0px, 
+      transparent 40px, 
+      rgba(255,255,255,0.03) 40px, 
+      rgba(255,255,255,0.03) 41px
+    );
+  }
+  
   /* Hover Effects */
   .hover-lift {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -184,6 +214,93 @@
   .scrollbar-dark::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.3);
   }
+  
+  /* Field Player Animations */
+  .field-player {
+    transition: all 0.3s ease;
+    animation: playerAppear 0.5s ease-out forwards;
+  }
+  
+  .field-player:hover {
+    transform: scale(1.15);
+    z-index: 20;
+  }
+  
+  @keyframes playerAppear {
+    from {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  
+  /* Formation Position Dots */
+  .position-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+  }
+  
+  /* Field Lines Animation */
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.6; }
+  }
+  
+  .field-pulse {
+    animation: pulse 3s ease-in-out infinite;
+  }
+  
+  /* Player Card Hover */
+  .player-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* Swap Mode Animation */
+  @keyframes swapPulse {
+    0%, 100% { 
+      box-shadow: 0 0 0 0 rgba(230, 126, 34, 0.4);
+    }
+    50% { 
+      box-shadow: 0 0 0 10px rgba(230, 126, 34, 0);
+    }
+  }
+  
+  .swap-pulse {
+    animation: swapPulse 1.5s ease-in-out infinite;
+  }
+  
+  /* Player Position Badge */
+  .position-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  /* Goal Post Animation */
+  @keyframes goalGlow {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+  
+  .goal-glow {
+    animation: goalGlow 2s ease-in-out infinite;
+  }
 }
 
 /* Mobile Touch Improvements */
@@ -209,6 +326,13 @@
   /* Better scrolling */
   .smooth-scroll {
     -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Field player size adjustment for mobile */
+  .field-player-mobile {
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 12px !important;
   }
 }
 
@@ -305,4 +429,51 @@
 .player-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Green Field Utility Classes */
+.field-green-gradient {
+  background: linear-gradient(180deg, #1a8a4a 0%, #2d9e5e 30%, #1a8a4a 60%, #0f7a3a 100%);
+}
+
+.field-green-pattern {
+  background: 
+    linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 50%, rgba(0,0,0,0.05) 100%),
+    repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,0.05) 40px, rgba(255,255,255,0.05) 41px);
+}
+
+/* Player Position Colors */
+.position-gk { background-color: #eab308; }
+.position-def { background-color: #3b82f6; }
+.position-mid { background-color: #22c55e; }
+.position-fwd { background-color: #ef4444; }
+
+/* Player Size Responsive */
+.player-circle {
+  width: 48px;
+  height: 48px;
+}
+
+@media (min-width: 640px) {
+  .player-circle {
+    width: 56px;
+    height: 56px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .player-circle {
+    width: 64px;
+    height: 64px;
+  }
+}
+
+/* Goal Animation */
+@keyframes goalGlow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+.goal-glow {
+  animation: goalGlow 2s ease-in-out infinite;
 }

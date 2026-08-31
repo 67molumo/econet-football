@@ -14,7 +14,10 @@ import {
   ChevronUp,
   RefreshCw,
   Download,
-  Printer
+  Printer,
+  Move,
+  ArrowLeftRight,
+  User
 } from 'lucide-react'
 import { usePlayers } from '../hooks/usePlayers'
 import { useMatches } from '../hooks/useMatches'
@@ -39,7 +42,8 @@ const TeamSelection = () => {
   const [isExporting, setIsExporting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null)
   const [showAvailable, setShowAvailable] = useState(false)
-  const [draggedPlayer, setDraggedPlayer] = useState(null)
+  const [swapMode, setSwapMode] = useState(false)
+  const [selectedForSwap, setSelectedForSwap] = useState(null)
 
   const canEdit = isAdmin || role === 'manager' || role === 'coach'
 
@@ -143,6 +147,26 @@ const TeamSelection = () => {
     setAvailablePlayers(prev => [...prev, player])
   }
 
+  // Swap two players in starting XI
+  const handleSwapPlayers = (player1Id, player2Id) => {
+    if (!canEdit) return
+    
+    const player1 = startingXI.find(p => p.id === player1Id)
+    const player2 = startingXI.find(p => p.id === player2Id)
+    
+    if (!player1 || !player2) return
+    
+    const updatedXI = startingXI.map(p => {
+      if (p.id === player1Id) return player2
+      if (p.id === player2Id) return player1
+      return p
+    })
+    
+    setStartingXI(updatedXI)
+    setSwapMode(false)
+    setSelectedForSwap(null)
+  }
+
   const resetTeam = () => {
     if (!canEdit) return
     const activePlayers = players.filter(p => p.is_active !== false)
@@ -152,6 +176,8 @@ const TeamSelection = () => {
     setStartingXI(firstEleven)
     setSubstitutes(remaining.slice(0, 7))
     setAvailablePlayers(remaining.slice(7))
+    setSwapMode(false)
+    setSelectedForSwap(null)
   }
 
   const handleDeletePlayer = async (playerId) => {
@@ -233,6 +259,16 @@ const TeamSelection = () => {
     return colors[position] || 'bg-gray-500'
   }
 
+  const getPositionLabel = (position) => {
+    const labels = {
+      GK: 'Goalkeeper',
+      DEF: 'Defender',
+      MID: 'Midfielder',
+      FWD: 'Forward'
+    }
+    return labels[position] || position
+  }
+
   // Assign players to formation positions
   const getFormationPlayers = () => {
     const positions = formationPositions[formation]?.players || formationPositions['4-4-2'].players
@@ -302,14 +338,30 @@ const TeamSelection = () => {
           </select>
 
           {canEdit && (
-            <button
-              onClick={resetTeam}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-              title="Reset Team"
-            >
-              <RefreshCw className="w-4 h-4" />
-              <span className="hidden sm:inline">Reset</span>
-            </button>
+            <>
+              <button
+                onClick={() => {
+                  setSwapMode(!swapMode)
+                  setSelectedForSwap(null)
+                }}
+                className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg transition-colors ${
+                  swapMode ? 'bg-[#e67e22] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+                title="Swap Player Positions"
+              >
+                <ArrowLeftRight className="w-4 h-4" />
+                <span className="hidden sm:inline">Swap</span>
+              </button>
+
+              <button
+                onClick={resetTeam}
+                className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Reset Team"
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span className="hidden sm:inline">Reset</span>
+              </button>
+            </>
           )}
 
           <Button
@@ -355,26 +407,56 @@ const TeamSelection = () => {
           </div>
         </div>
 
-        {/* Football Field */}
-        <div className="relative p-4" style={{ background: 'linear-gradient(180deg, #2d8a4e 0%, #1a6b3a 50%, #2d8a4e 100%)' }}>
-          {/* Field Pattern */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute inset-0" style={{
-              backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,0.05) 40px, rgba(255,255,255,0.05) 41px)'
-            }}></div>
+        {/* Football Field - GREEN PITCH */}
+        <div className="relative p-4" style={{ 
+          background: 'linear-gradient(180deg, #1a8a4a 0%, #2d9e5e 30%, #1a8a4a 60%, #0f7a3a 100%)',
+          backgroundImage: `
+            linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 50%, rgba(0,0,0,0.05) 100%),
+            repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,0.05) 40px, rgba(255,255,255,0.05) 41px)
+          `
+        }}>
+          {/* Field Pattern - Green Pitch Overlay */}
+          <div className="absolute inset-0" style={{
+            backgroundImage: `
+              radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0,0,0,0.1) 100%),
+              repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,0.05) 40px, rgba(255,255,255,0.05) 41px)
+            `
+          }}></div>
+
+          {/* Field Markings */}
+          <div className="absolute inset-0">
+            {/* Center Line */}
             <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-white/20 transform -translate-x-1/2"></div>
+            {/* Center Circle */}
             <div className="absolute left-1/2 top-1/2 w-24 h-24 rounded-full border-2 border-white/20 transform -translate-x-1/2 -translate-y-1/2"></div>
-            <div className="absolute left-1/2 top-0 w-8 h-12 border-2 border-white/20 transform -translate-x-1/2 rounded-b-full"></div>
-            <div className="absolute left-1/2 bottom-0 w-8 h-12 border-2 border-white/20 transform -translate-x-1/2 rounded-t-full"></div>
+            {/* Penalty Area Top */}
+            <div className="absolute left-1/2 top-0 w-16 h-12 border-2 border-white/20 transform -translate-x-1/2 rounded-b-full"></div>
+            {/* Penalty Area Bottom */}
+            <div className="absolute left-1/2 bottom-0 w-16 h-12 border-2 border-white/20 transform -translate-x-1/2 rounded-t-full"></div>
+            {/* Goal Top */}
+            <div className="absolute left-1/2 top-2 w-4 h-3 border-2 border-white/20 transform -translate-x-1/2 rounded-b-full"></div>
+            {/* Goal Bottom */}
+            <div className="absolute left-1/2 bottom-2 w-4 h-3 border-2 border-white/20 transform -translate-x-1/2 rounded-t-full"></div>
           </div>
 
           {/* Field Players */}
           <div className="relative z-10 min-h-[480px] sm:min-h-[560px]">
-            {/* GK */}
+            {/* GK - Special position at the top */}
             <div className="absolute left-1/2 top-4 transform -translate-x-1/2">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-yellow-400 border-2 border-white shadow-lg flex items-center justify-center text-xs font-bold text-gray-800">
-                GK
-              </div>
+              {formationPlayers[0]?.player ? (
+                <div className="relative group cursor-pointer">
+                  <div className={`w-14 h-14 rounded-full border-3 border-yellow-300 shadow-lg flex items-center justify-center text-sm font-bold text-white ${getPositionColor('GK')} hover:scale-110 transition-transform`}>
+                    {formationPlayers[0].player.shirt_number || '?'}
+                  </div>
+                  <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 whitespace-nowrap text-[10px] font-medium text-white bg-black/70 px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                    {formationPlayers[0].player.display_name}
+                  </div>
+                </div>
+              ) : (
+                <div className="w-14 h-14 rounded-full border-2 border-dashed border-white/50 bg-white/10 flex items-center justify-center text-xs text-white/50">
+                  GK
+                </div>
+              )}
             </div>
 
             {/* Other positions based on formation */}
@@ -382,13 +464,12 @@ const TeamSelection = () => {
               if (pos.id === 'gk') return null
               const row = pos.row
               const col = pos.col
-              const isTopRow = row === 2
-              const isMidRow = row === 3
-              const isBottomRow = row === 4
               
               // Calculate position percentages
-              const topPos = isTopRow ? '28%' : isMidRow ? '50%' : '72%'
+              const topPos = row === 2 ? '28%' : row === 3 ? '50%' : '72%'
               const leftPos = col + '%'
+              const isSelected = selectedForSwap === pos.player?.id
+              const isSwapMode = swapMode && pos.player
               
               return (
                 <div 
@@ -397,16 +478,38 @@ const TeamSelection = () => {
                   style={{ top: topPos, left: leftPos }}
                 >
                   {pos.player ? (
-                    <div className="relative group">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white border-2 border-[#1a4d7a] shadow-lg flex items-center justify-center text-xs font-bold text-gray-800 hover:scale-110 transition-transform cursor-pointer">
+                    <div 
+                      className={`relative group cursor-pointer transition-all ${
+                        isSelected ? 'scale-110 ring-4 ring-yellow-400 ring-offset-2' : ''
+                      } ${
+                        isSwapMode ? 'hover:scale-110' : ''
+                      }`}
+                      onClick={() => {
+                        if (swapMode && canEdit) {
+                          if (selectedForSwap === pos.player.id) {
+                            setSelectedForSwap(null)
+                          } else if (selectedForSwap) {
+                            handleSwapPlayers(selectedForSwap, pos.player.id)
+                          } else {
+                            setSelectedForSwap(pos.player.id)
+                          }
+                        }
+                      }}
+                    >
+                      <div className={`w-12 h-12 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-sm font-bold text-white ${getPositionColor(pos.player.position)} hover:scale-110 transition-transform`}>
                         {pos.player.shirt_number || '?'}
                       </div>
-                      <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 whitespace-nowrap text-[10px] font-medium text-white bg-black/60 px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 whitespace-nowrap text-[10px] font-medium text-white bg-black/70 px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
                         {pos.player.display_name}
                       </div>
+                      {isSwapMode && (
+                        <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#e67e22] text-white flex items-center justify-center text-[10px] font-bold">
+                          <Move className="w-3 h-3" />
+                        </div>
+                      )}
                     </div>
                   ) : (
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-dashed border-white/50 bg-white/10 flex items-center justify-center text-xs text-white/50">
+                    <div className="w-12 h-12 rounded-full border-2 border-dashed border-white/50 bg-white/10 flex items-center justify-center text-xs text-white/50">
                       ?
                     </div>
                   )}
@@ -415,18 +518,23 @@ const TeamSelection = () => {
             })}
           </div>
 
-          {/* Bench Info */}
+          {/* Bench Info - on the field */}
           <div className="relative z-10 mt-4 pt-4 border-t border-white/20">
             <div className="flex flex-wrap items-center justify-center gap-2 text-white/80 text-xs">
-              <span className="bg-white/10 px-3 py-1 rounded-full">
+              <span className="bg-white/10 px-3 py-1 rounded-full backdrop-blur-sm">
                 Starting XI: {startingXI.length}/11
               </span>
-              <span className="bg-white/10 px-3 py-1 rounded-full">
+              <span className="bg-white/10 px-3 py-1 rounded-full backdrop-blur-sm">
                 Subs: {substitutes.length}/7
               </span>
-              <span className="bg-white/10 px-3 py-1 rounded-full">
+              <span className="bg-white/10 px-3 py-1 rounded-full backdrop-blur-sm">
                 {formationPositions[formation]?.label}
               </span>
+              {swapMode && (
+                <span className="bg-yellow-500/30 px-3 py-1 rounded-full backdrop-blur-sm text-yellow-200">
+                  Swap Mode: Click two players
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -449,22 +557,22 @@ const TeamSelection = () => {
                   </div>
                   <span className="text-sm font-medium text-gray-700">{player.display_name}</span>
                   {canEdit && (
-                    <button
-                      onClick={() => moveToStarting(player)}
-                      className="ml-1 text-green-600 hover:text-green-800 transition-colors"
-                      title="Move to Starting XI"
-                    >
-                      <Plus className="w-3 h-3" />
-                    </button>
-                  )}
-                  {canEdit && (
-                    <button
-                      onClick={() => moveToAvailable(player)}
-                      className="text-gray-400 hover:text-red-600 transition-colors"
-                      title="Remove from substitutes"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
+                    <>
+                      <button
+                        onClick={() => moveToStarting(player)}
+                        className="ml-1 text-green-600 hover:text-green-800 transition-colors"
+                        title="Move to Starting XI"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={() => moveToAvailable(player)}
+                        className="text-gray-400 hover:text-red-600 transition-colors"
+                        title="Remove from substitutes"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </>
                   )}
                   {isAdmin && (
                     <button
