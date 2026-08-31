@@ -271,3 +271,38 @@
     display: block !important;
   }
 }
+
+/* Field Player Positions */
+.field-player {
+  transition: all 0.3s ease;
+}
+
+.field-player:hover {
+  transform: scale(1.15);
+  z-index: 20;
+}
+
+/* Formation Position Dots */
+.position-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+}
+
+/* Field Lines Animation */
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+.field-pulse {
+  animation: pulse 3s ease-in-out infinite;
+}
+
+/* Player Card Hover */
+.player-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
