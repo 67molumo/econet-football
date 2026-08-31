@@ -10,6 +10,7 @@ import Players from './pages/Players'
 import Statistics from './pages/Statistics'
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
+import TeamSelection from './pages/TeamSelection'
 import Login from './pages/Login'
 import Loading from './components/common/Loading'
 
@@ -52,7 +53,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public Home Route - No Layout */}
+        {/* Public Home Route */}
         <Route path="/" element={<Home />} />
 
         {/* Login Route */}
@@ -87,6 +88,12 @@ function App() {
           <MainLayout isAdmin={isAdmin} session={session} role={role} />
         }>
           <Route index element={<Reports />} />
+        </Route>
+
+        <Route path="/team-selection" element={
+          <MainLayout isAdmin={isAdmin} session={session} role={role} />
+        }>
+          <Route index element={<TeamSelection />} />
         </Route>
 
         <Route path="/settings" element={

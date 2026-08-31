@@ -13,16 +13,41 @@ export function usePlayers() {
   const fetchPlayers = async () => {
     try {
       setLoading(true)
+      setError(null)
+      
       const { data, error } = await supabase
         .from('players')
         .select('*')
         .order('shirt_number', { ascending: true })
 
-      if (error) throw error
-      setPlayers(data || [])
+      if (error) {
+        console.error('Error fetching players:', error)
+        
+        // If RLS error, try a simpler query without order
+        if (error.code === '42P17' || error.message.includes('infinite recursion')) {
+          console.log('RLS error detected, trying alternative query...')
+          const { data: altData, error: altError } = await supabase
+            .from('players')
+            .select('*')
+            .limit(100)
+          
+          if (!altError && altData) {
+            console.log('✅ Alternative query succeeded!')
+            setPlayers(altData)
+            setLoading(false)
+            return
+          }
+        }
+        
+        setError(error.message)
+        setPlayers([])
+      } else {
+        setPlayers(data || [])
+      }
     } catch (err) {
       console.error('Error fetching players:', err)
       setError(err.message)
+      setPlayers([])
     } finally {
       setLoading(false)
     }
@@ -127,11 +152,47 @@ export function usePlayers() {
     }
   }
 
+  // New function to get player by ID
+  const getPlayerById = async (id) => {
+    try {
+      const { data, error } = await supabase
+        .from('players')
+        .select('*')
+        .eq('id', id)
+        .single()
+      
+      if (error) throw error
+      return data
+    } catch (err) {
+      console.error('Error getting player by ID:', err)
+      throw err
+    }
+  }
+
+  // New function to get active players
+  const getActivePlayers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('players')
+        .select('*')
+        .eq('is_active', true)
+        .order('shirt_number', { ascending: true })
+      
+      if (error) throw error
+      return data || []
+    } catch (err) {
+      console.error('Error fetching active players:', err)
+      throw err
+    }
+  }
+
   return {
     players,
     loading,
     error,
     getPlayerStats,
+    getPlayerById,
+    getActivePlayers,
     addPlayer,
     updatePlayer,
     deletePlayer,

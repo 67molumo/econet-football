@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Shield, Mail, Lock, AlertCircle, Eye, EyeOff, ArrowLeft } from 'lucide-react'
+import { Shield, Mail, Lock, AlertCircle, Eye, EyeOff, ArrowLeft, Users, UserCog, ShieldCheck } from 'lucide-react'
 import supabase from '../lib/supabase'
 
 const Login = () => {
@@ -11,10 +11,11 @@ const Login = () => {
   const [isResetMode, setIsResetMode] = useState(false)
   const [resetSent, setResetSent] = useState(false)
   const [formData, setFormData] = useState({
-    email: 'admin@econetfc.com',
-    password: 'Admin@2026!'
+    email: '',
+    password: ''
   })
   const [resetEmail, setResetEmail] = useState('')
+  const [selectedRole, setSelectedRole] = useState('admin')
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -53,7 +54,7 @@ const Login = () => {
       }
 
       console.log('✅ Login successful!', data.user)
-      navigate('/')
+      navigate('/dashboard')
       
     } catch (error) {
       console.error('❌ Unexpected error:', error)
@@ -99,6 +100,36 @@ const Login = () => {
     setResetSent(false)
     setError('')
     setResetEmail('')
+  }
+
+  const fillCredentials = (role) => {
+    const credentials = {
+      admin: { email: 'admin@econetfc.com', password: 'Admin@2026!' },
+      manager: { email: 'manager@econetfc.com', password: 'Manager@2026!' },
+      coach: { email: 'coach@econetfc.com', password: 'Coach@2026!' },
+      viewer: { email: 'viewer@econetfc.com', password: 'Viewer@2026!' }
+    }
+    setFormData(credentials[role] || credentials.admin)
+    setSelectedRole(role)
+    setError('')
+  }
+
+  const getRoleIcon = (role) => {
+    switch(role) {
+      case 'admin': return <ShieldCheck className="w-4 h-4" />
+      case 'manager': return <UserCog className="w-4 h-4" />
+      case 'coach': return <Users className="w-4 h-4" />
+      default: return <Users className="w-4 h-4" />
+    }
+  }
+
+  const getRoleColor = (role) => {
+    switch(role) {
+      case 'admin': return 'border-green-200 bg-green-50 hover:bg-green-100'
+      case 'manager': return 'border-blue-200 bg-blue-50 hover:bg-blue-100'
+      case 'coach': return 'border-purple-200 bg-purple-50 hover:bg-purple-100'
+      default: return 'border-gray-200 bg-gray-50 hover:bg-gray-100'
+    }
   }
 
   // If reset email was sent
@@ -150,7 +181,7 @@ const Login = () => {
             <div className="flex items-center justify-center gap-3 mb-2">
               <Shield className="w-12 h-12 text-[#e67e22]" />
               <div>
-                <h1 className="text-2xl font-bold text-[#1a1a2e]">Econet FC</h1>
+                <h1 className="text-2xl font-bold text-[#1a1a2e]">Nchoathi FC</h1>
                 <p className="text-sm text-gray-500">Reset Password</p>
               </div>
             </div>
@@ -214,7 +245,7 @@ const Login = () => {
           <div className="flex items-center justify-center gap-3 mb-2">
             <Shield className="w-12 h-12 text-[#e67e22]" />
             <div>
-              <h1 className="text-2xl font-bold text-[#1a1a2e]">Econet FC</h1>
+              <h1 className="text-2xl font-bold text-[#1a1a2e]">Nchoathi FC</h1>
               <p className="text-sm text-gray-500">Football Management System</p>
             </div>
           </div>
@@ -230,7 +261,7 @@ const Login = () => {
                 <p className="text-sm text-red-700">{error}</p>
                 {error.includes('Invalid login credentials') && (
                   <p className="text-xs text-red-600 mt-1">
-                    Try using the demo credentials below
+                    Use the demo credentials below to log in
                   </p>
                 )}
               </div>
@@ -247,6 +278,7 @@ const Login = () => {
                 type="email"
                 value={formData.email}
                 onChange={handleChange}
+                placeholder="admin@econetfc.com"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#1a4d7a] focus:border-transparent"
                 required
               />
@@ -262,6 +294,7 @@ const Login = () => {
                   type={showPassword ? 'text' : 'password'}
                   value={formData.password}
                   onChange={handleChange}
+                  placeholder="Enter your password"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#1a4d7a] focus:border-transparent pr-10"
                   required
                 />
@@ -275,7 +308,7 @@ const Login = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-between">
               <button
                 type="button"
                 onClick={toggleResetMode}
@@ -294,11 +327,48 @@ const Login = () => {
             </button>
           </form>
 
-          <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          {/* Role Selection - Demo Credentials */}
+          <div className="mt-6">
+            <p className="text-xs text-gray-500 text-center mb-3">Quick Login with Demo Accounts</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => fillCredentials('admin')}
+                className={`flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border transition-all ${getRoleColor('admin')} ${selectedRole === 'admin' ? 'ring-2 ring-green-500' : ''}`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Admin
+              </button>
+              <button
+                onClick={() => fillCredentials('manager')}
+                className={`flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border transition-all ${getRoleColor('manager')} ${selectedRole === 'manager' ? 'ring-2 ring-blue-500' : ''}`}
+              >
+                <UserCog className="w-3.5 h-3.5" />
+                Manager
+              </button>
+              <button
+                onClick={() => fillCredentials('coach')}
+                className={`flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border transition-all ${getRoleColor('coach')} ${selectedRole === 'coach' ? 'ring-2 ring-purple-500' : ''}`}
+              >
+                <Users className="w-3.5 h-3.5" />
+                Coach
+              </button>
+              <button
+                onClick={() => fillCredentials('viewer')}
+                className={`flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border transition-all ${getRoleColor('viewer')} ${selectedRole === 'viewer' ? 'ring-2 ring-gray-500' : ''}`}
+              >
+                <Users className="w-3.5 h-3.5" />
+                Viewer
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-xs text-blue-800">
               <span className="font-medium">Demo Credentials:</span>
               <br />
-              <span className="font-mono">admin@econetfc.com</span> / <span className="font-mono">Admin@2026!</span>
+              <span className="font-mono text-[10px]">admin@econetfc.com</span> / <span className="font-mono text-[10px]">Admin@2026!</span>
+              <br />
+              <span className="font-mono text-[10px]">coach@econetfc.com</span> / <span className="font-mono text-[10px]">Coach@2026!</span>
             </p>
           </div>
 

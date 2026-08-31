@@ -10,7 +10,8 @@ import {
   X,
   LogIn,
   LogOut,
-  Home
+  Home,
+  Shield
 } from 'lucide-react'
 import supabase from '../../lib/supabase'
 
@@ -18,14 +19,15 @@ import supabase from '../../lib/supabase'
 import nchoathiLogo from '/images/nchoathi_logo.png'
 
 const Sidebar = ({ onClose, isAdmin, session, role }) => {
-  const navItems = [
-    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['admin', 'manager', 'viewer'] },
-    { path: '/matches', icon: Trophy, label: 'Matches', roles: ['admin', 'manager', 'viewer'] },
-    { path: '/players', icon: Users, label: 'Players', roles: ['admin', 'manager', 'viewer'] },
-    { path: '/statistics', icon: BarChart3, label: 'Statistics', roles: ['admin', 'manager', 'viewer'] },
-    { path: '/reports', icon: FileText, label: 'Reports', roles: ['admin', 'manager', 'viewer'] },
-    { path: '/settings', icon: Settings, label: 'Settings', roles: ['admin'] },
-  ]
+const navItems = [
+  { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['admin', 'manager', 'viewer'] },
+  { path: '/matches', icon: Trophy, label: 'Matches', roles: ['admin', 'manager', 'viewer'] },
+  { path: '/players', icon: Users, label: 'Players', roles: ['admin', 'manager', 'viewer'] },
+  { path: '/team-selection', icon: Shield, label: 'Team Selection', roles: ['admin', 'manager', 'coach', 'viewer'] },
+  { path: '/statistics', icon: BarChart3, label: 'Statistics', roles: ['admin', 'manager', 'viewer'] },
+  { path: '/reports', icon: FileText, label: 'Reports', roles: ['admin', 'manager', 'viewer'] },
+  { path: '/settings', icon: Settings, label: 'Settings', roles: ['admin'] },
+]
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
