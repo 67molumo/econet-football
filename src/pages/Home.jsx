@@ -9,6 +9,13 @@ import { formatDate } from '../utils/helpers'
 // Import the logo
 import nchoathiLogo from '/images/nchoathi_logo.png'
 
+// Display face used for scores, numerals and headings; body copy stays on Inter.
+// Add to index.html <head>:
+// <link rel="preconnect" href="https://fonts.googleapis.com">
+// <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+const DISPLAY_FONT = "'Oswald', sans-serif"
+const BODY_FONT = "'Inter', sans-serif"
+
 const Home = () => {
   const navigate = useNavigate()
   const { matches, loading: matchesLoading, getTeamStats } = useMatches()
@@ -30,7 +37,7 @@ const Home = () => {
       console.log('📊 Loading home data...')
       console.log('📊 Matches:', matches?.length)
       console.log('📊 Players:', players?.length)
-      
+
       const stats = await getTeamStats()
       console.log('📊 Team stats:', stats)
       setTeamStats(stats)
@@ -56,11 +63,11 @@ const Home = () => {
           }
         }
       }
-      
+
       const scorers = Object.values(scorerMap)
         .sort((a, b) => b.goals - a.goals)
         .slice(0, 3)
-      
+
       console.log('📊 Top scorers found:', scorers)
       setTopScorers(scorers)
 
@@ -68,7 +75,7 @@ const Home = () => {
         .filter(m => m.status === 'completed')
         .sort((a, b) => new Date(b.match_date) - new Date(a.match_date))
         .slice(0, 5)
-      
+
       console.log('📊 Recent matches:', completedMatches.length)
       setRecentMatches(completedMatches)
 
@@ -81,7 +88,7 @@ const Home = () => {
 
   if (loading || matchesLoading || playersLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-[#f6f4ef]">
         <Loading size="lg" />
       </div>
     )
@@ -90,156 +97,186 @@ const Home = () => {
   const features = [
     {
       icon: Trophy,
-      title: 'Match Management',
+      title: 'Match management',
       description: `Track ${teamStats?.total || 0} matches, scores, and results in one place`
     },
     {
       icon: Users,
-      title: 'Player Profiles',
+      title: 'Player profiles',
       description: `Manage ${players.length} player profiles, statistics, and appearances`
     },
     {
       icon: Award,
-      title: 'Top Scorers',
-      description: `Track top goal scorers and assist leaders in real-time`
+      title: 'Top scorers',
+      description: `Track top goal scorers and assist leaders in real time`
     },
     {
       icon: Target,
-      title: 'Team Statistics',
-      description: `Analyze team performance with ${teamStats?.winRate?.toFixed(1) || 0}% win rate`
+      title: 'Team statistics',
+      description: `Analyze team performance with a ${teamStats?.winRate?.toFixed(1) || 0}% win rate`
     }
   ]
 
   const stats = [
-    { label: 'Total Matches', value: teamStats?.total || 0, icon: Calendar },
-    { label: 'Wins', value: teamStats?.wins || 0, icon: Trophy },
-    { label: 'Players', value: players.length, icon: Users },
-    { label: 'Goals Scored', value: teamStats?.goalsFor || 0, icon: Activity }
+    { label: 'Matches played', value: teamStats?.total || 0 },
+    { label: 'Wins', value: teamStats?.wins || 0 },
+    { label: 'Squad size', value: players.length },
+    { label: 'Goals scored', value: teamStats?.goalsFor || 0 }
   ]
 
-  const getResultBadge = (result) => {
-    const styles = {
-      win: 'bg-green-100 text-green-800',
-      draw: 'bg-yellow-100 text-yellow-800',
-      loss: 'bg-red-100 text-red-800'
-    }
-    return styles[result] || 'bg-gray-100 text-gray-800'
+  const resultStyles = {
+    win: { bg: '#eaf3ec', text: '#1c5c3f', dot: '#2f8558' },
+    draw: { bg: '#f8f0e2', text: '#8a6a1f', dot: '#c99a2e' },
+    loss: { bg: '#f6ecea', text: '#9c3b3b', dot: '#b1503f' }
   }
 
+  const getResultStyle = (result) => resultStyles[result] || { bg: '#eef0f2', text: '#5b6472', dot: '#8a97a3' }
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen" style={{ fontFamily: BODY_FONT }}>
       {/* Hero Section with Background Image */}
-      <div 
+      <div
         className="relative min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: 'url("/images/hero-bg.jpeg")',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          backgroundColor: '#1a1a2e',
+          backgroundColor: '#0b1f2e',
         }}
       >
-        {/* Dark Overlay */}
-        <div className="absolute inset-0 bg-black/60"></div>
-        
+        {/* Stadium-toned overlay */}
+        <div
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(180deg, rgba(11,31,46,0.88) 0%, rgba(11,31,46,0.72) 45%, rgba(11,31,46,0.92) 100%)' }}
+        ></div>
+
         {/* Content */}
         <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <div className="max-w-4xl mx-auto text-center">
+          <div className="max-w-3xl mx-auto text-center">
             {/* Logo */}
-            <div className="flex justify-center mb-6">
-              <img 
-                src={nchoathiLogo} 
-                alt="Nchoathi FC Logo" 
-                className="w-24 h-24 sm:w-32 sm:h-32 object-contain rounded-2xl shadow-2xl bg-white/10 p-2"
+            <div className="flex justify-center mb-8">
+              <img
+                src={nchoathiLogo}
+                alt="Nchoathi FC Logo"
+                className="w-20 h-20 sm:w-24 sm:h-24 object-contain p-2"
+                style={{ border: '1px solid rgba(230,126,34,0.5)', borderRadius: '4px' }}
               />
             </div>
-            
+
             {/* Title */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
-              Nchoathi FC
-              <span className="block text-[#e67e22]">Management System</span>
-            </h1>
-            
-            <p className="text-lg sm:text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-              The complete football management platform for tracking matches, 
-              players, and statistics. Built for teams who want to stay ahead.
-            </p>
+<h1
+  className="text-4xl sm:text-5xl lg:text-6xl text-white mb-5 leading-[1.05]"
+  style={{
+    fontFamily: DISPLAY_FONT,
+    fontWeight: 600,
+    letterSpacing: '0.01em'
+  }}
+>
+  Nchoathi FC
+  <span className="block text-[#e67e22]">Football Hub</span>
+</h1>
+
+<p
+  className="text-base sm:text-lg mb-10 max-w-xl mx-auto"
+  style={{ color: '#c3ccd4' }}
+>
+  Everything Nchoathi FC, all in one place.
+  <br />
+  Track matches, manage players, follow performance, and
+  <br className="hidden sm:block" />
+  keep the team moving forward.
+</p>
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={() => navigate('/dashboard')}
-                className="inline-flex items-center justify-center px-6 py-3 bg-[#e67e22] text-white font-semibold rounded-lg hover:bg-[#d35400] transition-colors duration-200 shadow-lg hover:shadow-xl"
+                className="inline-flex items-center justify-center px-7 py-3 bg-[#e67e22] text-white font-medium hover:bg-[#d35400] transition-colors duration-200"
+                style={{ borderRadius: '3px' }}
               >
-                <Trophy className="w-5 h-5 mr-2" />
-                View Dashboard
+                <Trophy className="w-4 h-4 mr-2" />
+                View dashboard
                 <ArrowRight className="w-4 h-4 ml-2" />
               </button>
               <button
                 onClick={() => navigate('/matches')}
-                className="inline-flex items-center justify-center px-6 py-3 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-lg hover:bg-white/20 transition-colors duration-200 border border-white/20"
+                className="inline-flex items-center justify-center px-7 py-3 text-white font-medium transition-colors duration-200"
+                style={{ borderRadius: '3px', border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.04)' }}
               >
-                <Calendar className="w-5 h-5 mr-2" />
-                View Matches
+                <Calendar className="w-4 h-4 mr-2" />
+                View matches
               </button>
             </div>
 
-            {/* Quick Stats */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-12 pt-8 border-t border-white/10">
-              {stats.map((stat, index) => {
-                const Icon = stat.icon
-                return (
-                  <div key={index} className="text-center">
-                    <Icon className="w-6 h-6 text-[#e67e22] mx-auto mb-1" />
-                    <p className="text-2xl sm:text-3xl font-bold text-white">{stat.value}</p>
-                    <p className="text-sm text-gray-400">{stat.label}</p>
+            {/* Scoreboard strip */}
+            <div className="flex justify-center mt-16 pt-8" style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}>
+              <div className="flex divide-x" style={{ borderColor: 'rgba(255,255,255,0.14)' }}>
+                {stats.map((stat, index) => (
+                  <div key={index} className="text-center px-6 sm:px-8 first:pl-0 last:pr-0">
+                    <p
+                      className="text-3xl sm:text-4xl text-white"
+                      style={{ fontFamily: DISPLAY_FONT, fontWeight: 500 }}
+                    >
+                      {stat.value}
+                    </p>
+                    <p className="text-xs sm:text-sm mt-1" style={{ color: '#8a97a3' }}>{stat.label}</p>
                   </div>
-                )
-              })}
+                ))}
+              </div>
             </div>
-          </div>
-        </div>
-
-        {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10 animate-bounce">
-          <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
-            <div className="w-1 h-3 bg-white/50 rounded-full mt-2"></div>
           </div>
         </div>
       </div>
 
       {/* Top Scorers & Recent Matches Section */}
-      <div className="py-16 bg-gray-50">
+      <div className="py-20" style={{ backgroundColor: '#f6f4ef' }}>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
             {/* Top Scorers */}
-            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <div className="bg-white p-7" style={{ border: '1px solid #e5e1d8', borderRadius: '4px' }}>
+              <h3
+                className="text-xl mb-5 flex items-center gap-2 text-[#0b1f2e]"
+                style={{ fontFamily: DISPLAY_FONT, fontWeight: 500 }}
+              >
                 <Award className="w-5 h-5 text-[#e67e22]" />
-                Top Scorers
+                Top scorers
               </h3>
               {topScorers.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">No scorers yet</p>
+                <div className="text-center py-10">
+                  <p className="text-gray-600">No scorers yet</p>
                   <p className="text-xs text-gray-400 mt-1">Goals will appear here once matches are completed</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div>
                   {topScorers.map((scorer, index) => (
-                    <div key={scorer.id || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                          index === 0 ? 'bg-yellow-400 text-yellow-900' :
-                          index === 1 ? 'bg-gray-300 text-gray-700' :
-                          'bg-amber-600 text-white'
-                        }`}>
-                          {index + 1}
+                    <div
+                      key={scorer.id || index}
+                      className="flex items-center justify-between py-3"
+                      style={{ borderTop: index === 0 ? 'none' : '1px solid #ece8de' }}
+                    >
+                      <div className="flex items-center gap-4">
+                        <span
+                          className="flex items-center justify-center w-9 h-9 text-sm text-[#1a4d7a]"
+                          style={{
+                            fontFamily: DISPLAY_FONT,
+                            fontWeight: 600,
+                            border: '1.5px solid #1a4d7a',
+                            borderRadius: '3px'
+                          }}
+                        >
+                          {scorer.shirt_number}
                         </span>
                         <div>
-                          <span className="font-medium text-gray-900">{scorer.name}</span>
-                          <span className="text-xs text-gray-500 ml-2">#{scorer.shirt_number}</span>
+                          <p className="font-medium text-[#0b1f2e]">{scorer.name}</p>
+                          <p className="text-xs text-gray-400">Rank {index + 1}</p>
                         </div>
                       </div>
-                      <span className="text-xl font-bold text-[#e67e22]">{scorer.goals}</span>
+                      <span
+                        className="text-2xl text-[#e67e22]"
+                        style={{ fontFamily: DISPLAY_FONT, fontWeight: 600 }}
+                      >
+                        {scorer.goals}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -247,35 +284,52 @@ const Home = () => {
             </div>
 
             {/* Recent Matches */}
-            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-blue-600" />
-                Recent Matches
+            <div className="bg-white p-7" style={{ border: '1px solid #e5e1d8', borderRadius: '4px' }}>
+              <h3
+                className="text-xl mb-5 flex items-center gap-2 text-[#0b1f2e]"
+                style={{ fontFamily: DISPLAY_FONT, fontWeight: 500 }}
+              >
+                <Calendar className="w-5 h-5 text-[#1a4d7a]" />
+                Recent matches
               </h3>
               {recentMatches.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No matches yet</p>
+                <p className="text-gray-600 text-center py-10">No matches yet</p>
               ) : (
-                <div className="space-y-3">
-                  {recentMatches.map((match) => (
-                    <div key={match.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-gray-900">Econet</span>
-                          <span className="text-xs text-gray-400">vs</span>
-                          <span className="font-medium text-gray-700">{match.opponent}</span>
+                <div>
+                  {recentMatches.map((match, index) => {
+                    const style = getResultStyle(match.result)
+                    return (
+                      <div
+                        key={match.id}
+                        className="flex items-center justify-between py-3"
+                        style={{ borderTop: index === 0 ? 'none' : '1px solid #ece8de' }}
+                      >
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-[#0b1f2e]">Econet</span>
+                            <span className="text-xs text-gray-400">vs</span>
+                            <span className="text-gray-700">{match.opponent}</span>
+                          </div>
+                          <p className="text-xs text-gray-400 mt-0.5">{formatDate(match.match_date)}</p>
                         </div>
-                        <p className="text-xs text-gray-500">{formatDate(match.match_date)}</p>
+                        <div className="flex items-center gap-3">
+                          <span
+                            className="text-xl text-[#0b1f2e]"
+                            style={{ fontFamily: DISPLAY_FONT, fontWeight: 500 }}
+                          >
+                            {match.home_score} – {match.away_score}
+                          </span>
+                          <span
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium"
+                            style={{ backgroundColor: style.bg, color: style.text, borderRadius: '3px' }}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: style.dot }}></span>
+                            {match.result === 'win' ? 'Win' : match.result === 'draw' ? 'Draw' : match.result === 'loss' ? 'Loss' : match.result}
+                          </span>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <span className="font-bold text-gray-900">
-                          {match.home_score} - {match.away_score}
-                        </span>
-                        <span className={`ml-2 inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${getResultBadge(match.result)}`}>
-                          {match.result?.toUpperCase()}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>
@@ -284,23 +338,27 @@ const Home = () => {
       </div>
 
       {/* Features Section */}
-      <div className="py-16 bg-white">
+      <div className="py-20 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900">Why Nchoathi FC?</h2>
-            <p className="text-gray-600 mt-2">Everything you need to manage your football team</p>
+          <div className="max-w-2xl mb-14">
+            <h2 className="text-3xl text-[#0b1f2e]" style={{ fontFamily: DISPLAY_FONT, fontWeight: 500 }}>
+              Why Nchoathi FC
+            </h2>
+            <p className="text-gray-600 mt-3">Everything you need to run a football club, in one place.</p>
           </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-10">
             {features.map((feature, index) => {
               const Icon = feature.icon
               return (
-                <div key={index} className="bg-gray-50 rounded-xl p-6 hover:shadow-md transition-shadow duration-200 border border-gray-100">
-                  <div className="w-12 h-12 bg-[#1a4d7a]/10 rounded-lg flex items-center justify-center mb-4">
-                    <Icon className="w-6 h-6 text-[#1a4d7a]" />
+                <div key={index} className="flex gap-4 pl-5" style={{ borderLeft: '2px solid #e67e22' }}>
+                  <Icon className="w-5 h-5 text-[#1a4d7a] mt-1 flex-shrink-0" />
+                  <div>
+                    <h3 className="text-lg text-[#0b1f2e] mb-1.5" style={{ fontFamily: DISPLAY_FONT, fontWeight: 500 }}>
+                      {feature.title}
+                    </h3>
+                    <p className="text-gray-600 text-sm leading-relaxed">{feature.description}</p>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                  <p className="text-gray-600 text-sm">{feature.description}</p>
                 </div>
               )
             })}
@@ -309,47 +367,49 @@ const Home = () => {
       </div>
 
       {/* CTA Section */}
-      <div className="py-16 bg-[#1a1a2e]">
+      <div className="py-20" style={{ backgroundColor: '#0b1f2e' }}>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">
+          <h2 className="text-3xl text-white mb-4" style={{ fontFamily: DISPLAY_FONT, fontWeight: 500 }}>
             Ready to take control?
           </h2>
-          <p className="text-gray-400 mb-8 max-w-2xl mx-auto">
+          <p className="mb-9 max-w-xl mx-auto" style={{ color: '#8a97a3' }}>
             Join Nchoathi FC Management System and start managing your team like a pro.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={() => navigate('/login')}
-              className="inline-flex items-center justify-center px-6 py-3 bg-[#e67e22] text-white font-semibold rounded-lg hover:bg-[#d35400] transition-colors duration-200"
+              className="inline-flex items-center justify-center px-7 py-3 bg-[#e67e22] text-white font-medium hover:bg-[#d35400] transition-colors duration-200"
+              style={{ borderRadius: '3px' }}
             >
-              <LogIn className="w-5 h-5 mr-2" />
-              Sign In
+              <LogIn className="w-4 h-4 mr-2" />
+              Sign in
             </button>
             <button
               onClick={() => navigate('/matches')}
-              className="inline-flex items-center justify-center px-6 py-3 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 transition-colors duration-200 border border-white/20"
+              className="inline-flex items-center justify-center px-7 py-3 text-white font-medium transition-colors duration-200"
+              style={{ borderRadius: '3px', border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.04)' }}
             >
-              <Star className="w-5 h-5 mr-2" />
-              Browse Matches
+              <Star className="w-4 h-4 mr-2" />
+              Browse matches
             </button>
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <footer className="bg-[#0f0f1a] py-8 border-t border-gray-800">
+      <footer className="py-8" style={{ backgroundColor: '#08161f', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row justify-between items-center">
             <div className="flex items-center gap-2 mb-4 sm:mb-0">
-              <img 
-                src={nchoathiLogo} 
-                alt="Nchoathi FC Logo" 
-                className="w-6 h-6 sm:w-8 sm:h-8 object-contain"
+              <img
+                src={nchoathiLogo}
+                alt="Nchoathi FC Logo"
+                className="w-6 h-6 sm:w-7 sm:h-7 object-contain"
               />
-              <span className="text-white font-semibold">Nchoathi FC</span>
-              <span className="text-gray-500 text-sm">Management System</span>
+              <span className="text-white font-medium">Nchoathi FC</span>
+              <span className="text-sm" style={{ color: '#5b6472' }}>Management System</span>
             </div>
-            <div className="flex items-center gap-6 text-sm text-gray-500">
+            <div className="flex items-center gap-6 text-sm" style={{ color: '#5b6472' }}>
               <span>© 2026 Nchoathi FC</span>
             </div>
           </div>
