@@ -1,8 +1,27 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Shield, Trophy, Users, Calendar, ArrowRight, Star, Award, Target, Lock, LogIn, TrendingUp, Activity } from 'lucide-react'
+import { 
+  Shield, 
+  Trophy, 
+  Users, 
+  Calendar, 
+  ArrowRight, 
+  Star, 
+  Award, 
+  Target, 
+  LogIn, 
+  Eye,
+  Zap,
+  Crown,
+  User,
+  Activity,
+  TrendingUp,
+  Clock
+} from 'lucide-react'
 import { useMatches } from '../hooks/useMatches'
 import { usePlayers } from '../hooks/usePlayers'
+import { useLineups } from '../hooks/useLineups'
+import LineupField from '../components/LineupField'
 import Loading from '../components/common/Loading'
 import { formatDate } from '../utils/helpers'
 
@@ -10,9 +29,6 @@ import { formatDate } from '../utils/helpers'
 import nchoathiLogo from '/images/nchoathi_logo.png'
 
 // Display face used for scores, numerals and headings; body copy stays on Inter.
-// Add to index.html <head>:
-// <link rel="preconnect" href="https://fonts.googleapis.com">
-// <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 const DISPLAY_FONT = "'Oswald', sans-serif"
 const BODY_FONT = "'Inter', sans-serif"
 
@@ -20,9 +36,12 @@ const Home = () => {
   const navigate = useNavigate()
   const { matches, loading: matchesLoading, getTeamStats } = useMatches()
   const { players, loading: playersLoading } = usePlayers()
+  const { getLatestLineup, loading: lineupLoading } = useLineups()
+  
   const [teamStats, setTeamStats] = useState(null)
   const [topScorers, setTopScorers] = useState([])
   const [recentMatches, setRecentMatches] = useState([])
+  const [latestLineup, setLatestLineup] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -31,18 +50,30 @@ const Home = () => {
     }
   }, [matches, players, matchesLoading, playersLoading])
 
+  useEffect(() => {
+    const loadLatestLineup = async () => {
+      try {
+        const lineup = await getLatestLineup()
+        setLatestLineup(lineup)
+      } catch (error) {
+        console.error('Error loading latest lineup:', error)
+      }
+    }
+    loadLatestLineup()
+  }, [])
+
   const loadHomeData = async () => {
     try {
       setLoading(true)
-      console.log('📊 Loading home data...')
-      console.log('📊 Matches:', matches?.length)
-      console.log('📊 Players:', players?.length)
+      console.log('Loading home data...')
+      console.log('Matches:', matches?.length)
+      console.log('Players:', players?.length)
 
       const stats = await getTeamStats()
-      console.log('📊 Team stats:', stats)
+      console.log('Team stats:', stats)
       setTeamStats(stats)
 
-      // Get top scorers
+      // Get top scorers from match_scorers
       const scorerMap = {}
       for (const match of matches) {
         if (match.status === 'completed') {
@@ -55,7 +86,8 @@ const Home = () => {
                   id: playerId,
                   name: playerName,
                   goals: 0,
-                  shirt_number: scorer.players?.shirt_number || '?'
+                  shirt_number: scorer.players?.shirt_number || '?',
+                  position: scorer.players?.position || 'N/A'
                 }
               }
               scorerMap[playerId].goals += scorer.goals || 0
@@ -68,7 +100,7 @@ const Home = () => {
         .sort((a, b) => b.goals - a.goals)
         .slice(0, 3)
 
-      console.log('📊 Top scorers found:', scorers)
+      console.log('Top scorers found:', scorers)
       setTopScorers(scorers)
 
       const completedMatches = matches
@@ -76,17 +108,17 @@ const Home = () => {
         .sort((a, b) => new Date(b.match_date) - new Date(a.match_date))
         .slice(0, 5)
 
-      console.log('📊 Recent matches:', completedMatches.length)
+      console.log('Recent matches:', completedMatches.length)
       setRecentMatches(completedMatches)
 
     } catch (error) {
-      console.error('❌ Error loading home data:', error)
+      console.error('Error loading home data:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  if (loading || matchesLoading || playersLoading) {
+  if (loading || matchesLoading || playersLoading || lineupLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f6f4ef]">
         <Loading size="lg" />
@@ -132,9 +164,38 @@ const Home = () => {
 
   const getResultStyle = (result) => resultStyles[result] || { bg: '#eef0f2', text: '#5b6472', dot: '#8a97a3' }
 
+  const getPositionColor = (position) => {
+    const colors = {
+      GK: 'bg-yellow-500',
+      DEF: 'bg-blue-500',
+      MID: 'bg-green-500',
+      FWD: 'bg-red-500'
+    }
+    return colors[position] || 'bg-gray-500'
+  }
+
+  const getMedalColor = (index) => {
+    const colors = {
+      0: 'border-yellow-400 text-yellow-400',
+      1: 'border-gray-400 text-gray-400',
+      2: 'border-amber-600 text-amber-600'
+    }
+    return colors[index] || 'border-gray-300 text-gray-400'
+  }
+
+  const getPositionIcon = (position) => {
+    const icons = {
+      GK: <Shield className="w-3 h-3" />,
+      DEF: <Shield className="w-3 h-3" />,
+      MID: <Zap className="w-3 h-3" />,
+      FWD: <Target className="w-3 h-3" />
+    }
+    return icons[position] || <User className="w-3 h-3" />
+  }
+
   return (
     <div className="min-h-screen" style={{ fontFamily: BODY_FONT }}>
-      {/* Hero Section with Background Image */}
+      {/* Hero Section */}
       <div
         className="relative min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat"
         style={{
@@ -144,13 +205,11 @@ const Home = () => {
           backgroundColor: '#0b1f2e',
         }}
       >
-        {/* Stadium-toned overlay */}
         <div
           className="absolute inset-0"
           style={{ background: 'linear-gradient(180deg, rgba(11,31,46,0.88) 0%, rgba(11,31,46,0.72) 45%, rgba(11,31,46,0.92) 100%)' }}
-        ></div>
+        />
 
-        {/* Content */}
         <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="max-w-3xl mx-auto text-center">
             {/* Logo */}
@@ -164,28 +223,28 @@ const Home = () => {
             </div>
 
             {/* Title */}
-<h1
-  className="text-4xl sm:text-5xl lg:text-6xl text-white mb-5 leading-[1.05]"
-  style={{
-    fontFamily: DISPLAY_FONT,
-    fontWeight: 600,
-    letterSpacing: '0.01em'
-  }}
->
-  Nchoathi FC
-  <span className="block text-[#e67e22]">Football Hub</span>
-</h1>
+            <h1
+              className="text-4xl sm:text-5xl lg:text-6xl text-white mb-5 leading-[1.05]"
+              style={{
+                fontFamily: DISPLAY_FONT,
+                fontWeight: 600,
+                letterSpacing: '0.01em'
+              }}
+            >
+              Nchoathi FC
+              <span className="block text-[#e67e22]">Football Hub</span>
+            </h1>
 
-<p
-  className="text-base sm:text-lg mb-10 max-w-xl mx-auto"
-  style={{ color: '#c3ccd4' }}
->
-  Everything Nchoathi FC, all in one place.
-  <br />
-  Track matches, manage players, follow performance, and
-  <br className="hidden sm:block" />
-  keep the team moving forward.
-</p>
+            <p
+              className="text-base sm:text-lg mb-10 max-w-xl mx-auto"
+              style={{ color: '#c3ccd4' }}
+            >
+              Everything Nchoathi FC, all in one place.
+              <br />
+              Track matches, manage players, follow performance, and
+              <br className="hidden sm:block" />
+              keep the team moving forward.
+            </p>
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -228,11 +287,44 @@ const Home = () => {
         </div>
       </div>
 
+      {/* Latest Lineup Section - Using LineupField Component */}
+      {latestLineup && latestLineup.lineup_players && latestLineup.lineup_players.length > 0 && (
+        <div className="py-16" style={{ backgroundColor: '#ffffff' }}>
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2
+                className="text-2xl text-[#0b1f2e] flex items-center gap-3"
+                style={{ fontFamily: DISPLAY_FONT, fontWeight: 500 }}
+              >
+                <Crown className="w-6 h-6 text-[#e67e22]" />
+                Latest Lineup
+                <span className="text-sm font-normal text-gray-500" style={{ fontFamily: BODY_FONT }}>
+                  vs {latestLineup.matches?.opponent || 'TBD'}
+                </span>
+              </h2>
+              <span className="text-sm text-gray-400">
+                {latestLineup.formation || '4-4-2'}
+              </span>
+            </div>
+            <LineupField 
+              lineup={latestLineup} 
+              formation={latestLineup.formation || '4-4-2'} 
+              showNames={true}
+            />
+            <div className="mt-4 text-center">
+              <span className="text-xs text-gray-400">
+                Last updated: {latestLineup.updated_at ? new Date(latestLineup.updated_at).toLocaleDateString() : 'N/A'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top Scorers & Recent Matches Section */}
       <div className="py-20" style={{ backgroundColor: '#f6f4ef' }}>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-            {/* Top Scorers */}
+            {/* Top Scorers - Using same style as Dashboard */}
             <div className="bg-white p-7" style={{ border: '1px solid #e5e1d8', borderRadius: '4px' }}>
               <h3
                 className="text-xl mb-5 flex items-center gap-2 text-[#0b1f2e]"
@@ -255,19 +347,34 @@ const Home = () => {
                       style={{ borderTop: index === 0 ? 'none' : '1px solid #ece8de' }}
                     >
                       <div className="flex items-center gap-4">
-                        <span
-                          className="flex items-center justify-center w-9 h-9 text-sm text-[#1a4d7a]"
-                          style={{
-                            fontFamily: DISPLAY_FONT,
-                            fontWeight: 600,
-                            border: '1.5px solid #1a4d7a',
-                            borderRadius: '3px'
-                          }}
-                        >
-                          {scorer.shirt_number}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`flex items-center justify-center w-8 h-8 text-sm border-2 rounded-full ${getMedalColor(index)}`}
+                            style={{ fontFamily: DISPLAY_FONT, fontWeight: 600 }}
+                          >
+                            {index + 1}
+                          </span>
+                          <span
+                            className="flex items-center justify-center w-8 h-8 text-sm text-white"
+                            style={{
+                              fontFamily: DISPLAY_FONT,
+                              fontWeight: 600,
+                              backgroundColor: '#1a4d7a',
+                              borderRadius: '3px'
+                            }}
+                          >
+                            {scorer.shirt_number}
+                          </span>
+                        </div>
                         <div>
-                          <p className="font-medium text-[#0b1f2e]">{scorer.name}</p>
+                          <p className="font-medium text-[#0b1f2e] flex items-center gap-1.5">
+                            {scorer.name}
+                            {scorer.position && (
+                              <span className="text-[10px] text-gray-400 font-normal">
+                                {scorer.position}
+                              </span>
+                            )}
+                          </p>
                           <p className="text-xs text-gray-400">Rank {index + 1}</p>
                         </div>
                       </div>
@@ -306,7 +413,7 @@ const Home = () => {
                       >
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-[#0b1f2e]">Econet</span>
+                            <span className="font-medium text-[#0b1f2e]">Nchoathi FC</span>
                             <span className="text-xs text-gray-400">vs</span>
                             <span className="text-gray-700">{match.opponent}</span>
                           </div>
@@ -323,7 +430,7 @@ const Home = () => {
                             className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium"
                             style={{ backgroundColor: style.bg, color: style.text, borderRadius: '3px' }}
                           >
-                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: style.dot }}></span>
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: style.dot }} />
                             {match.result === 'win' ? 'Win' : match.result === 'draw' ? 'Draw' : match.result === 'loss' ? 'Loss' : match.result}
                           </span>
                         </div>

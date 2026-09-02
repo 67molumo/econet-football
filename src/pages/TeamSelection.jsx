@@ -14,10 +14,13 @@ import {
   ChevronUp,
   RefreshCw,
   Move,
-  ArrowLeftRight
+  ArrowLeftRight,
+  Save,
+  CheckCircle
 } from 'lucide-react'
 import { usePlayers } from '../hooks/usePlayers'
 import { useMatches } from '../hooks/useMatches'
+import { useLineups } from '../hooks/useLineups'
 import Loading from '../components/common/Loading'
 import Button from '../components/common/Button'
 import { formatDate } from '../utils/helpers'
@@ -30,6 +33,7 @@ const TeamSelection = () => {
   
   const { players, loading: playersLoading, deletePlayer, refreshPlayers } = usePlayers()
   const { matches, loading: matchesLoading } = useMatches()
+  const { saveLineup, getLineupByMatch, loading: lineupLoading } = useLineups()
   
   const [startingXI, setStartingXI] = useState([])
   const [substitutes, setSubstitutes] = useState([])
@@ -41,6 +45,9 @@ const TeamSelection = () => {
   const [showAvailable, setShowAvailable] = useState(false)
   const [swapMode, setSwapMode] = useState(false)
   const [selectedForSwap, setSelectedForSwap] = useState(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+  const [isLoadingLineup, setIsLoadingLineup] = useState(false)
 
   const canEdit = isAdmin || role === 'manager' || role === 'coach'
 
@@ -124,17 +131,53 @@ const TeamSelection = () => {
     }
   }, [players, playersLoading])
 
+  useEffect(() => {
+    const loadExistingLineup = async () => {
+      if (!selectedMatch) return
+      
+      setIsLoadingLineup(true)
+      try {
+        const lineup = await getLineupByMatch(selectedMatch)
+        if (lineup && lineup.lineup_players) {
+          const starting = lineup.lineup_players
+            .filter(p => p.is_starting)
+            .map(p => p.players)
+          const subs = lineup.lineup_players
+            .filter(p => p.is_substitute)
+            .map(p => p.players)
+          
+          if (starting.length > 0) setStartingXI(starting)
+          if (subs.length > 0) setSubstitutes(subs)
+          setFormation(lineup.formation || '4-4-2')
+          
+          const usedPlayerIds = [...starting, ...subs].map(p => p.id)
+          const available = players
+            .filter(p => p.is_active !== false)
+            .filter(p => !usedPlayerIds.includes(p.id))
+          setAvailablePlayers(available)
+        }
+      } catch (error) {
+        console.error('Error loading lineup:', error)
+      } finally {
+        setIsLoadingLineup(false)
+      }
+    }
+    loadExistingLineup()
+  }, [selectedMatch, players])
+
   const moveToStarting = (player) => {
     if (!canEdit || startingXI.length >= 11) return
     setSubstitutes(prev => prev.filter(p => p.id !== player.id))
     setAvailablePlayers(prev => prev.filter(p => p.id !== player.id))
     setStartingXI(prev => [...prev, player])
+    setSaveSuccess(false)
   }
 
   const moveToSubstitutes = (player) => {
     if (!canEdit) return
     setStartingXI(prev => prev.filter(p => p.id !== player.id))
     setSubstitutes(prev => [...prev, player])
+    setSaveSuccess(false)
   }
 
   const moveToAvailable = (player) => {
@@ -142,25 +185,61 @@ const TeamSelection = () => {
     setStartingXI(prev => prev.filter(p => p.id !== player.id))
     setSubstitutes(prev => prev.filter(p => p.id !== player.id))
     setAvailablePlayers(prev => [...prev, player])
+    setSaveSuccess(false)
   }
 
+  // ENHANCED SWAP FUNCTION - Works between Starting XI and Substitutes
   const handleSwapPlayers = (player1Id, player2Id) => {
     if (!canEdit) return
     
-    const player1 = startingXI.find(p => p.id === player1Id)
-    const player2 = startingXI.find(p => p.id === player2Id)
+    // Find players in both arrays
+    const player1 = startingXI.find(p => p.id === player1Id) || substitutes.find(p => p.id === player1Id)
+    const player2 = startingXI.find(p => p.id === player2Id) || substitutes.find(p => p.id === player2Id)
     
     if (!player1 || !player2) return
     
-    const updatedXI = startingXI.map(p => {
-      if (p.id === player1Id) return player2
-      if (p.id === player2Id) return player1
-      return p
-    })
+    // Check where each player is
+    const p1InStarting = startingXI.some(p => p.id === player1Id)
+    const p2InStarting = startingXI.some(p => p.id === player2Id)
+    const p1InSubs = substitutes.some(p => p.id === player1Id)
+    const p2InSubs = substitutes.some(p => p.id === player2Id)
     
-    setStartingXI(updatedXI)
+    // Case 1: Both in Starting XI - swap within starting XI
+    if (p1InStarting && p2InStarting) {
+      const updatedXI = startingXI.map(p => {
+        if (p.id === player1Id) return player2
+        if (p.id === player2Id) return player1
+        return p
+      })
+      setStartingXI(updatedXI)
+    }
+    // Case 2: Both in Substitutes - swap within substitutes
+    else if (p1InSubs && p2InSubs) {
+      const updatedSubs = substitutes.map(p => {
+        if (p.id === player1Id) return player2
+        if (p.id === player2Id) return player1
+        return p
+      })
+      setSubstitutes(updatedSubs)
+    }
+    // Case 3: One in Starting XI, one in Substitutes - SUBSTITUTION!
+    else if ((p1InStarting && p2InSubs) || (p1InSubs && p2InStarting)) {
+      const startingPlayer = p1InStarting ? player1 : player2
+      const subPlayer = p1InSubs ? player1 : player2
+      
+      const newStartingXI = startingXI.filter(p => p.id !== startingPlayer.id)
+      const newSubs = substitutes.filter(p => p.id !== subPlayer.id)
+      
+      newSubs.push(startingPlayer)
+      newStartingXI.push(subPlayer)
+      
+      setStartingXI(newStartingXI)
+      setSubstitutes(newSubs)
+    }
+    
     setSwapMode(false)
     setSelectedForSwap(null)
+    setSaveSuccess(false)
   }
 
   const resetTeam = () => {
@@ -174,6 +253,31 @@ const TeamSelection = () => {
     setAvailablePlayers(remaining.slice(7))
     setSwapMode(false)
     setSelectedForSwap(null)
+    setSaveSuccess(false)
+  }
+
+  const handleSaveLineup = async () => {
+    if (!selectedMatch) {
+      alert('Please select a match first!')
+      return
+    }
+
+    if (startingXI.length < 11) {
+      alert('Please select 11 players for the starting XI!')
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      const allPlayers = [...startingXI, ...substitutes]
+      await saveLineup(selectedMatch, formation, allPlayers)
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 3000)
+    } catch (error) {
+      alert('Error saving lineup: ' + error.message)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const handleDeletePlayer = async (playerId) => {
@@ -190,7 +294,7 @@ const TeamSelection = () => {
     }
   }
 
-  // Enhanced PNG Export with better quality
+  // Enhanced PNG Export
   const exportAsPNG = async () => {
     const element = document.getElementById('lineup-content')
     if (!element) {
@@ -200,7 +304,6 @@ const TeamSelection = () => {
     
     setIsExporting(true)
     try {
-      // Force a reflow to ensure all styles are applied
       element.style.display = 'block'
       void element.offsetHeight
       
@@ -213,7 +316,6 @@ const TeamSelection = () => {
         width: element.scrollWidth,
         height: element.scrollHeight,
         onclone: (clonedDoc, clonedElement) => {
-          // Ensure the field is green in the clone
           const field = clonedElement.querySelector('.field-pitch')
           if (field) {
             field.style.background = 'linear-gradient(180deg, #1a9e4a 0%, #2daf5e 25%, #3abf6e 50%, #2daf5e 75%, #1a9e4a 100%)'
@@ -234,7 +336,7 @@ const TeamSelection = () => {
     }
   }
 
-  // Enhanced PDF Export with better quality
+  // Enhanced PDF Export
   const exportAsPDF = async () => {
     const element = document.getElementById('lineup-content')
     if (!element) {
@@ -294,16 +396,6 @@ const TeamSelection = () => {
     return colors[position] || 'bg-gray-500'
   }
 
-  const getPositionLabel = (position) => {
-    const labels = {
-      GK: 'Goalkeeper',
-      DEF: 'Defender',
-      MID: 'Midfielder',
-      FWD: 'Forward'
-    }
-    return labels[position] || position
-  }
-
   // Assign players to formation positions
   const getFormationPlayers = () => {
     const positions = formationPositions[formation]?.players || formationPositions['4-4-2'].players
@@ -327,7 +419,7 @@ const TeamSelection = () => {
     return assigned
   }
 
-  if (playersLoading || matchesLoading) {
+  if (playersLoading || matchesLoading || lineupLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <Loading size="lg" />
@@ -382,7 +474,7 @@ const TeamSelection = () => {
                 className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg transition-colors ${
                   swapMode ? 'bg-[#e67e22] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
-                title="Swap Player Positions"
+                title="Swap players (Starting XI ↔ Substitutes)"
               >
                 <ArrowLeftRight className="w-4 h-4" />
                 <span className="hidden sm:inline">Swap</span>
@@ -395,6 +487,29 @@ const TeamSelection = () => {
               >
                 <RefreshCw className="w-4 h-4" />
                 <span className="hidden sm:inline">Reset</span>
+              </button>
+
+              <button
+                onClick={handleSaveLineup}
+                disabled={isSaving}
+                className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg transition-colors ${
+                  saveSuccess 
+                    ? 'bg-green-600 text-white' 
+                    : 'bg-[#1a4d7a] text-white hover:bg-[#0f3460]'
+                }`}
+                title="Save Lineup"
+              >
+                {saveSuccess ? (
+                  <>
+                    <CheckCircle className="w-4 h-4" />
+                    <span className="hidden sm:inline">Saved!</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span className="hidden sm:inline">{isSaving ? 'Saving...' : 'Save'}</span>
+                  </>
+                )}
               </button>
             </>
           )}
@@ -423,6 +538,25 @@ const TeamSelection = () => {
           </Button>
         </div>
       </div>
+
+      {/* Info Banner for Swap Mode */}
+      {swapMode && (
+        <div className="bg-[#e67e22]/10 border border-[#e67e22] text-[#e67e22] p-3 rounded-lg text-sm flex items-center gap-2">
+          <Move className="w-4 h-4" />
+          <span>
+            <strong>Swap Mode Active:</strong> Click any two players to swap positions.
+            {startingXI.length > 0 && substitutes.length > 0 && (
+              <span className="ml-1">You can swap between Starting XI and Substitutes!</span>
+            )}
+          </span>
+          <button
+            onClick={() => setSwapMode(false)}
+            className="ml-auto text-[#e67e22] hover:text-[#d35400]"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Main Lineup */}
       <div id="lineup-content" ref={contentRef} className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
@@ -469,23 +603,14 @@ const TeamSelection = () => {
 
           {/* Field Markings - White Lines */}
           <div className="absolute inset-0" style={{ pointerEvents: 'none' }}>
-            {/* Center Line */}
             <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-white/30 transform -translate-x-1/2"></div>
-            {/* Center Circle */}
             <div className="absolute left-1/2 top-1/2 w-32 h-32 rounded-full border-2 border-white/30 transform -translate-x-1/2 -translate-y-1/2"></div>
-            {/* Center Spot */}
             <div className="absolute left-1/2 top-1/2 w-3 h-3 rounded-full bg-white/30 transform -translate-x-1/2 -translate-y-1/2"></div>
-            {/* Penalty Area Top */}
             <div className="absolute left-1/2 top-0 w-20 h-14 border-2 border-white/30 transform -translate-x-1/2 rounded-b-full"></div>
-            {/* Penalty Area Bottom */}
             <div className="absolute left-1/2 bottom-0 w-20 h-14 border-2 border-white/30 transform -translate-x-1/2 rounded-t-full"></div>
-            {/* Goal Top */}
             <div className="absolute left-1/2 top-2 w-6 h-4 border-2 border-white/30 transform -translate-x-1/2 rounded-b-full"></div>
-            {/* Goal Bottom */}
             <div className="absolute left-1/2 bottom-2 w-6 h-4 border-2 border-white/30 transform -translate-x-1/2 rounded-t-full"></div>
-            {/* Penalty Spot Top */}
             <div className="absolute left-1/2 top-[18%] w-2 h-2 rounded-full bg-white/20 transform -translate-x-1/2"></div>
-            {/* Penalty Spot Bottom */}
             <div className="absolute left-1/2 bottom-[18%] w-2 h-2 rounded-full bg-white/20 transform -translate-x-1/2"></div>
           </div>
 
@@ -590,6 +715,12 @@ const TeamSelection = () => {
                   Swap Mode: Click two players
                 </span>
               )}
+              {saveSuccess && (
+                <span className="bg-green-500/30 px-3 py-1 rounded-full backdrop-blur-sm text-green-200">
+                  <CheckCircle className="w-3 h-3 inline mr-1" />
+                  Saved!
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -606,7 +737,9 @@ const TeamSelection = () => {
               <p className="text-sm text-gray-400 italic">No substitutes selected</p>
             ) : (
               substitutes.map((player) => (
-                <div key={player.id} className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-200 group">
+                <div key={player.id} className={`flex items-center gap-2 bg-white px-3 py-2 rounded-lg shadow-sm border group ${
+                  selectedForSwap === player.id && swapMode ? 'ring-2 ring-yellow-400 border-yellow-400' : 'border-gray-200'
+                }`}>
                   <div className={`w-8 h-8 rounded-full ${getPositionColor(player.position)} text-white flex items-center justify-center text-xs font-bold`}>
                     {player.shirt_number || '?'}
                   </div>
@@ -636,6 +769,24 @@ const TeamSelection = () => {
                       title="Delete player"
                     >
                       <Trash2 className="w-3 h-3" />
+                    </button>
+                  )}
+                  {swapMode && (
+                    <button
+                      onClick={() => {
+                        if (selectedForSwap === player.id) {
+                          setSelectedForSwap(null)
+                        } else if (selectedForSwap) {
+                          handleSwapPlayers(selectedForSwap, player.id)
+                        } else {
+                          setSelectedForSwap(player.id)
+                        }
+                      }}
+                      className={`text-xs px-2 py-1 rounded ${
+                        selectedForSwap === player.id ? 'bg-yellow-400 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                      }`}
+                    >
+                      {selectedForSwap === player.id ? 'Selected' : 'Select'}
                     </button>
                   )}
                 </div>
@@ -699,6 +850,15 @@ const TeamSelection = () => {
           </div>
         )}
       </div>
+
+      {/* ============================================ */}
+{/* ADD LINEUP HISTORY HERE - RIGHT AFTER AVAILABLE PLAYERS */}
+{/* ============================================ */}
+{canEdit && selectedMatch && (
+  <div className="p-4 bg-white border-t border-gray-200">
+    <LineupHistory matchId={selectedMatch} />
+  </div>
+)}
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (

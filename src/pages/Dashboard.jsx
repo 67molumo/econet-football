@@ -1,8 +1,23 @@
 import React, { useState, useEffect } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { Trophy, Users, Calendar, TrendingUp, Activity, Lock } from 'lucide-react'
+import { 
+  Trophy, 
+  Users, 
+  Calendar, 
+  TrendingUp, 
+  Activity, 
+  Lock, 
+  Shield, 
+  Eye,
+  Award,
+  Zap,
+  Target,
+  Crown,
+  Clock
+} from 'lucide-react'
 import { useMatches } from '../hooks/useMatches'
 import { usePlayers } from '../hooks/usePlayers'
+import { useLineups } from '../hooks/useLineups'
 import StatCard from '../components/Dashboard/StatCard'
 import RecentMatches from '../components/Dashboard/RecentMatches'
 import TopScorers from '../components/Dashboard/TopScorers'
@@ -11,10 +26,12 @@ import Loading from '../components/common/Loading'
 const Dashboard = () => {
   // Get isAdmin and role from outlet context
   const { isAdmin, role } = useOutletContext()
-  console.log('📊 Dashboard - isAdmin:', isAdmin, 'role:', role)
+  console.log('Dashboard - isAdmin:', isAdmin, 'role:', role)
 
   const { matches, loading: matchesLoading } = useMatches()
   const { players, loading: playersLoading } = usePlayers()
+  const { getLatestLineup, loading: lineupLoading } = useLineups()
+  
   const [stats, setStats] = useState({
     total: 0,
     wins: 0,
@@ -24,9 +41,10 @@ const Dashboard = () => {
     goalsFor: 0,
     goalsAgainst: 0
   })
+  const [latestLineup, setLatestLineup] = useState(null)
 
-  // Check if user has admin or manager role
-  const hasAccess = isAdmin || role === 'manager'
+  // Check if user has admin, manager, or coach role
+  const hasAccess = isAdmin || role === 'manager' || role === 'coach'
 
   useEffect(() => {
     if (matches.length > 0) {
@@ -51,7 +69,19 @@ const Dashboard = () => {
     }
   }, [matches])
 
-  if (matchesLoading || playersLoading) {
+  useEffect(() => {
+    const loadLatestLineup = async () => {
+      try {
+        const lineup = await getLatestLineup()
+        setLatestLineup(lineup)
+      } catch (error) {
+        console.error('Error loading latest lineup:', error)
+      }
+    }
+    loadLatestLineup()
+  }, [])
+
+  if (matchesLoading || playersLoading || lineupLoading) {
     return (
       <div className="flex justify-center items-center h-48 sm:h-64">
         <Loading size="md" />
@@ -74,8 +104,8 @@ const Dashboard = () => {
             <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">Dashboard</h1>
             <p className="text-xs sm:text-sm text-gray-500">
               {hasAccess 
-                ? 'Welcome to Econet Football Management System' 
-                : 'View Econet Football Club statistics and updates'}
+                ? 'Welcome to Nchoathi Football Management System' 
+                : 'View Nchoathi Football Club statistics and updates'}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -84,6 +114,14 @@ const Dashboard = () => {
               <div className="hidden sm:flex items-center gap-1.5 text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full">
                 <Lock className="w-3 h-3" />
                 <span>View Only</span>
+              </div>
+            )}
+            
+            {/* Coach Badge */}
+            {role === 'coach' && (
+              <div className="hidden sm:flex items-center gap-1.5 text-xs text-purple-600 bg-purple-50 px-3 py-1.5 rounded-full">
+                <span className="w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
+                <span>Coach</span>
               </div>
             )}
             
@@ -106,7 +144,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Stats Grid - Responsive */}
+      {/* Stats Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 mb-3 sm:mb-4">
         {statCards.map((stat) => (
           <StatCard key={stat.label} {...stat} />
@@ -126,7 +164,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Role Specific Section - Hidden from public */}
+      {/* Role Specific Section */}
       {hasAccess && (
         <div className="mt-4 sm:mt-6 p-3 sm:p-4 rounded-lg border">
           {isAdmin ? (
@@ -143,6 +181,14 @@ const Dashboard = () => {
               <div className="flex items-center gap-2 text-sm text-blue-700">
                 <span>📋</span>
                 <span>You have access to manage matches and players</span>
+              </div>
+            </div>
+          ) : role === 'coach' ? (
+            // Coach Message
+            <div className="bg-purple-50 border-purple-200">
+              <div className="flex items-center gap-2 text-sm text-purple-700">
+                <span>🏟️</span>
+                <span>You have access to manage team selection and view statistics</span>
               </div>
             </div>
           ) : null}
